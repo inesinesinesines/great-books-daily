@@ -1,0 +1,65 @@
+name: Daily Great Books Update
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '10 3 * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Generate daily report
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_MODEL: ${{ secrets.CLAUDE_MODEL }}
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+          READING_MODE: ${{ secrets.READING_MODE }}
+          TIMEZONE: ${{ secrets.TIMEZONE }}
+          START_DATE: ${{ secrets.START_DATE }}
+          OUTPUT_DIR: ./data
+          WEB_APP_URL: https://inesinesinesines.github.io/great-books-daily/
+          JSON_BASE_URL: https://inesinesinesines.github.io/great-books-daily/data
+        run: python generate_daily_report.py
+
+      - name: Push report to Notion
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_MODEL: ${{ secrets.CLAUDE_MODEL }}
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+          READING_MODE: ${{ secrets.READING_MODE }}
+          TIMEZONE: ${{ secrets.TIMEZONE }}
+          START_DATE: ${{ secrets.START_DATE }}
+          OUTPUT_DIR: ./data
+          WEB_APP_URL: https://inesinesinesines.github.io/great-books-daily/
+          JSON_BASE_URL: https://inesinesinesines.github.io/great-books-daily/data
+        run: python push_to_notion.py
+
+      - name: Commit and push updated files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/today.json data/daily || true
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "Update daily report"
+          git push

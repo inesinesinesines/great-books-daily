@@ -63,3 +63,46 @@ jobs:
           git diff --cached --quiet && echo "No changes to commit" && exit 0
           git commit -m "Update daily report"
           git push
+
+      - name: Notify Slack
+        if: success()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          TODAY_TITLE: ${{ env.TODAY_TITLE }}
+          TODAY_AUTHOR: ${{ env.TODAY_AUTHOR }}
+          TODAY_SUMMARY: ${{ env.TODAY_SUMMARY }}
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+          --data "{
+            \"blocks\": [
+              {
+                \"type\": \"header\",
+                \"text\": {
+                  \"type\": \"plain_text\",
+                  \"text\": \"📚 오늘의 고전 리포트가 준비되었습니다\"
+                }
+              },
+              {
+                \"type\": \"section\",
+                \"text\": {
+                  \"type\": \"mrkdwn\",
+                  \"text\": \"*${TODAY_AUTHOR}* - _${TODAY_TITLE}_\n${TODAY_SUMMARY}\"
+                }
+              },
+              {
+                \"type\": \"actions\",
+                \"elements\": [
+                  {
+                    \"type\": \"button\",
+                    \"text\": {
+                      \"type\": \"plain_text\",
+                      \"text\": \"오늘의 리포트 보기\"
+                    },
+                    \"url\": \"https://inesinesinesines.github.io/great-books-daily/\",
+                    \"style\": \"primary\"
+                  }
+                ]
+              }
+            ]
+          }" \
+          $SLACK_WEBHOOK_URL

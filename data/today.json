@@ -1,0 +1,49 @@
+{
+  "date": "2026-04-20",
+  "book_id": 8,
+  "author": "Sophocles",
+  "title": "Antigone",
+  "category": "Tragedy",
+  "tradition": "Greek",
+  "source_rank": 1,
+  "source_basis": "Basic Program 공개 페이지/샘플 커리큘럼에서 직접 확인됨",
+  "reading_mode": "ranked",
+  "one_line": "국가의 법과 개인의 양심이 정면으로 충돌하는 고전 비극입니다.",
+  "summary": [
+    "안티고네는 왕의 명령을 어기고 오빠를 매장하려 합니다.",
+    "크레온은 국가 질서와 통치 권위를 지키려 하며 이를 금지합니다.",
+    "이 갈등은 가족 의무, 신의 법, 국가 권력의 충돌로 확대됩니다.",
+    "작품은 누구의 정의가 더 정당한지 쉽게 결론 내리지 않게 만듭니다.",
+    "그래서 오늘 읽어도 법, 양심, 저항의 문제를 날카롭게 던집니다."
+  ],
+  "keywords": [
+    "양심",
+    "국가",
+    "법",
+    "비극"
+  ],
+  "why_now": "공적 질서와 개인의 신념이 충돌하는 문제는 여전히 정치와 사회의 핵심 쟁점입니다. 이 작품은 법을 지키는 일과 정의를 지키는 일이 항상 같지 않을 수 있음을 보여줍니다.",
+  "discussion_question": "국가의 법이 도덕적으로 잘못되었다고 판단될 때 시민은 어디까지 저항할 수 있을까?",
+  "perplexity_followup_prompt": "소포클레스의 안티고네를 시민 불복종과 현대 민주주의 관점에서 설명해줘.",
+  "next_recommendations": [
+    {
+      "book_id": 12,
+      "title": "Apology",
+      "author": "Plato",
+      "reason": "공개 Basic Program 자료에서 직접 확인되는 작품이어서 우선 추천됩니다."
+    },
+    {
+      "book_id": 13,
+      "title": "Crito",
+      "author": "Plato",
+      "reason": "공개 Basic Program 자료에서 직접 확인되는 작품이어서 우선 추천됩니다."
+    },
+    {
+      "book_id": 14,
+      "title": "Meno",
+      "author": "Plato",
+      "reason": "공개 Basic Program 자료에서 직접 확인되는 작품이어서 우선 추천됩니다."
+    }
+  ],
+  "source_note": "Basic Program / Great Books 스타일 일일 리포트"
+}

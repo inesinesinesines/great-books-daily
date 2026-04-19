@@ -1,0 +1,902 @@
+[
+  {
+    "id": 1,
+    "author": "Homer",
+    "title": "The Iliad",
+    "category": "Ancient Epic",
+    "tradition": "Greek",
+    "source_rank": 1,
+    "source_basis": "Basic Program 공개 페이지/샘플 커리큘럼에서 직접 확인됨"
+  },
+  {
+    "id": 2,
+    "author": "Homer",
+    "title": "The Odyssey",
+    "category": "Ancient Epic",
+    "tradition": "Greek",
+    "source_rank": 1,
+    "source_basis": "Basic Program 공개 페이지/샘플 커리큘럼에서 직접 확인됨"
+  },
+  {
+    "id": 5,
+    "author": "Herodotus",
+    "title": "Histories",
+    "category": "History",
+    "tradition": "Greek",
+    "source_rank": 1,
+    "source_basis": "Basic Program 공개 페이지/샘플 커리큘럼에서 직접 확인됨"
+  },
+  {
+    "id": 7,
+    "author": "Aeschylus",
+    "title": "Oresteia",
+    "category": "Tragedy",
+    "tradition": "Greek",
+    "source_rank": 1,
+    "source_basis": "Basic Program 공개 페이지/샘플 커리큘럼에서 직접 확인됨"
+  },
+  {
+    "id": 8,
+    "author": "Sophocles",
+    "title": "Antigone",
+    "category": "Tragedy",
+    "tradition": "Greek",
+    "source_rank": 1,
+    "source_basis": "Basic Program 공개 페이지/샘플 커리큘럼에서 직접 확인됨"
+  },
+  {
+    "id": 12,
+    "author": "Plato",
+    "title": "Apology",
+    "category": "Philosophy",
+    "tradition": "Greek",
+    "source_rank": 1,
+    "source_basis": "Basic Program 공개 페이지/샘플 커리큘럼에서 직접 확인됨"
+  },
+  {
+    "id": 13,
+    "author": "Plato",
+    "title": "Crito",
+    "category": "Philosophy",
+    "tradition": "Greek",
+    "source_rank": 1,
+    "source_basis": "Basic Program 공개 페이지/샘플 커리큘럼에서 직접 확인됨"
+  },
+  {
+    "id": 14,
+    "author": "Plato",
+    "title": "Meno",
+    "category": "Philosophy",
+    "tradition": "Greek",
+    "source_rank": 1,
+    "source_basis": "Basic Program 공개 페이지/샘플 커리큘럼에서 직접 확인됨"
+  },
+  {
+    "id": 16,
+    "author": "Plato",
+    "title": "Symposium",
+    "category": "Philosophy",
+    "tradition": "Greek",
+    "source_rank": 1,
+    "source_basis": "Basic Program 공개 페이지/샘플 커리큘럼에서 직접 확인됨"
+  },
+  {
+    "id": 17,
+    "author": "Plato",
+    "title": "Republic",
+    "category": "Political Philosophy",
+    "tradition": "Greek",
+    "source_rank": 1,
+    "source_basis": "Basic Program 공개 페이지/샘플 커리큘럼에서 직접 확인됨"
+  },
+  {
+    "id": 18,
+    "author": "Aristotle",
+    "title": "Nicomachean Ethics",
+    "category": "Philosophy",
+    "tradition": "Greek",
+    "source_rank": 1,
+    "source_basis": "Basic Program 공개 페이지/샘플 커리큘럼에서 직접 확인됨"
+  },
+  {
+    "id": 21,
+    "author": "Aristotle",
+    "title": "Physics",
+    "category": "Natural Philosophy",
+    "tradition": "Greek",
+    "source_rank": 1,
+    "source_basis": "Basic Program 공개 페이지/샘플 커리큘럼에서 직접 확인됨"
+  },
+  {
+    "id": 24,
+    "author": "Plutarch",
+    "title": "Lives",
+    "category": "Biography",
+    "tradition": "Greek/Roman",
+    "source_rank": 1,
+    "source_basis": "Basic Program 공개 페이지/샘플 커리큘럼에서 직접 확인됨"
+  },
+  {
+    "id": 28,
+    "author": "Lucretius",
+    "title": "On the Nature of Things",
+    "category": "Natural Philosophy",
+    "tradition": "Roman",
+    "source_rank": 1,
+    "source_basis": "Basic Program 공개 페이지/샘플 커리큘럼에서 직접 확인됨"
+  },
+  {
+    "id": 29,
+    "author": "Virgil",
+    "title": "The Aeneid",
+    "category": "Epic",
+    "tradition": "Roman",
+    "source_rank": 1,
+    "source_basis": "Basic Program 공개 페이지/샘플 커리큘럼에서 직접 확인됨"
+  },
+  {
+    "id": 32,
+    "author": "Augustine",
+    "title": "Confessions",
+    "category": "Theology",
+    "tradition": "Late Antique",
+    "source_rank": 1,
+    "source_basis": "Basic Program 공개 페이지/샘플 커리큘럼에서 직접 확인됨"
+  },
+  {
+    "id": 35,
+    "author": "Thomas Aquinas",
+    "title": "Treatise on Law",
+    "category": "Theology",
+    "tradition": "Medieval",
+    "source_rank": 1,
+    "source_basis": "Basic Program 공개 페이지/샘플 커리큘럼에서 직접 확인됨"
+  },
+  {
+    "id": 40,
+    "author": "Machiavelli",
+    "title": "The Prince",
+    "category": "Political Thought",
+    "tradition": "Renaissance",
+    "source_rank": 1,
+    "source_basis": "Basic Program 공개 페이지/샘플 커리큘럼에서 직접 확인됨"
+  },
+  {
+    "id": 46,
+    "author": "Shakespeare",
+    "title": "Hamlet",
+    "category": "Drama",
+    "tradition": "Early Modern",
+    "source_rank": 1,
+    "source_basis": "Basic Program 공개 페이지/샘플 커리큘럼에서 직접 확인됨"
+  },
+  {
+    "id": 47,
+    "author": "Shakespeare",
+    "title": "King Lear",
+    "category": "Drama",
+    "tradition": "Early Modern",
+    "source_rank": 1,
+    "source_basis": "Basic Program 공개 페이지/샘플 커리큘럼에서 직접 확인됨"
+  },
+  {
+    "id": 49,
+    "author": "Shakespeare",
+    "title": "The Tempest",
+    "category": "Drama",
+    "tradition": "Early Modern",
+    "source_rank": 1,
+    "source_basis": "Basic Program 공개 페이지/샘플 커리큘럼에서 직접 확인됨"
+  },
+  {
+    "id": 51,
+    "author": "Hobbes",
+    "title": "Leviathan",
+    "category": "Political Philosophy",
+    "tradition": "Early Modern",
+    "source_rank": 1,
+    "source_basis": "Basic Program 공개 페이지/샘플 커리큘럼에서 직접 확인됨"
+  },
+  {
+    "id": 52,
+    "author": "Locke",
+    "title": "Second Treatise of Government",
+    "category": "Political Philosophy",
+    "tradition": "Early Modern",
+    "source_rank": 1,
+    "source_basis": "Basic Program 공개 페이지/샘플 커리큘럼에서 직접 확인됨"
+  },
+  {
+    "id": 53,
+    "author": "Rousseau",
+    "title": "Discourse on Inequality",
+    "category": "Political Philosophy",
+    "tradition": "Enlightenment",
+    "source_rank": 1,
+    "source_basis": "Basic Program 공개 페이지/샘플 커리큘럼에서 직접 확인됨"
+  },
+  {
+    "id": 62,
+    "author": "Jane Austen",
+    "title": "Pride and Prejudice",
+    "category": "Novel",
+    "tradition": "Modern",
+    "source_rank": 1,
+    "source_basis": "Basic Program 공개 페이지/샘플 커리큘럼에서 직접 확인됨"
+  },
+  {
+    "id": 73,
+    "author": "Dostoevsky",
+    "title": "Crime and Punishment",
+    "category": "Novel",
+    "tradition": "Modern",
+    "source_rank": 1,
+    "source_basis": "Basic Program 공개 페이지/샘플 커리큘럼에서 직접 확인됨"
+  },
+  {
+    "id": 85,
+    "author": "James Joyce",
+    "title": "A Portrait of the Artist as a Young Man",
+    "category": "Novel",
+    "tradition": "Modernist",
+    "source_rank": 1,
+    "source_basis": "Basic Program 공개 페이지/샘플 커리큘럼에서 직접 확인됨"
+  },
+  {
+    "id": 86,
+    "author": "Virginia Woolf",
+    "title": "A Room of One’s Own",
+    "category": "Essay",
+    "tradition": "Modernist",
+    "source_rank": 1,
+    "source_basis": "Basic Program 공개 페이지/샘플 커리큘럼에서 직접 확인됨"
+  },
+  {
+    "id": 15,
+    "author": "Plato",
+    "title": "Gorgias",
+    "category": "Philosophy",
+    "tradition": "Greek",
+    "source_rank": 2,
+    "source_basis": "Basic Program 페이지에서 명시된 대표 저자군 기반 보강"
+  },
+  {
+    "id": 19,
+    "author": "Aristotle",
+    "title": "Politics",
+    "category": "Political Philosophy",
+    "tradition": "Greek",
+    "source_rank": 2,
+    "source_basis": "Basic Program 페이지에서 명시된 대표 저자군 기반 보강"
+  },
+  {
+    "id": 20,
+    "author": "Aristotle",
+    "title": "Poetics",
+    "category": "Literary Theory",
+    "tradition": "Greek",
+    "source_rank": 2,
+    "source_basis": "Basic Program 페이지에서 명시된 대표 저자군 기반 보강"
+  },
+  {
+    "id": 36,
+    "author": "Dante",
+    "title": "Inferno",
+    "category": "Epic Poetry",
+    "tradition": "Medieval",
+    "source_rank": 2,
+    "source_basis": "Basic Program 페이지에서 명시된 대표 저자군 기반 보강"
+  },
+  {
+    "id": 37,
+    "author": "Dante",
+    "title": "Purgatorio",
+    "category": "Epic Poetry",
+    "tradition": "Medieval",
+    "source_rank": 2,
+    "source_basis": "Basic Program 페이지에서 명시된 대표 저자군 기반 보강"
+  },
+  {
+    "id": 38,
+    "author": "Dante",
+    "title": "Paradiso",
+    "category": "Epic Poetry",
+    "tradition": "Medieval",
+    "source_rank": 2,
+    "source_basis": "Basic Program 페이지에서 명시된 대표 저자군 기반 보강"
+  },
+  {
+    "id": 45,
+    "author": "Descartes",
+    "title": "Meditations on First Philosophy",
+    "category": "Philosophy",
+    "tradition": "Early Modern",
+    "source_rank": 2,
+    "source_basis": "Basic Program 페이지에서 명시된 대표 저자군 기반 보강"
+  },
+  {
+    "id": 48,
+    "author": "Shakespeare",
+    "title": "Macbeth",
+    "category": "Drama",
+    "tradition": "Early Modern",
+    "source_rank": 2,
+    "source_basis": "Basic Program 페이지에서 명시된 대표 저자군 기반 보강"
+  },
+  {
+    "id": 50,
+    "author": "Shakespeare",
+    "title": "Antony and Cleopatra",
+    "category": "Drama",
+    "tradition": "Early Modern",
+    "source_rank": 2,
+    "source_basis": "Basic Program 페이지에서 명시된 대표 저자군 기반 보강"
+  },
+  {
+    "id": 61,
+    "author": "Alexis de Tocqueville",
+    "title": "Democracy in America",
+    "category": "Political Sociology",
+    "tradition": "Modern",
+    "source_rank": 2,
+    "source_basis": "Basic Program 페이지에서 명시된 대표 저자군 기반 보강"
+  },
+  {
+    "id": 87,
+    "author": "Virginia Woolf",
+    "title": "The Waves",
+    "category": "Novel",
+    "tradition": "Modernist",
+    "source_rank": 2,
+    "source_basis": "Basic Program 페이지에서 명시된 대표 저자군 기반 보강"
+  },
+  {
+    "id": 97,
+    "author": "Toni Morrison",
+    "title": "Beloved",
+    "category": "Novel",
+    "tradition": "20th Century",
+    "source_rank": 2,
+    "source_basis": "Basic Program 페이지에서 명시된 대표 저자군 기반 보강"
+  },
+  {
+    "id": 98,
+    "author": "Toni Morrison",
+    "title": "Song of Solomon",
+    "category": "Novel",
+    "tradition": "20th Century",
+    "source_rank": 2,
+    "source_basis": "Basic Program 페이지에서 명시된 대표 저자군 기반 보강"
+  },
+  {
+    "id": 3,
+    "author": "Hesiod",
+    "title": "Theogony",
+    "category": "Ancient Poetry",
+    "tradition": "Greek",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 4,
+    "author": "Hesiod",
+    "title": "Works and Days",
+    "category": "Ancient Poetry",
+    "tradition": "Greek",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 6,
+    "author": "Thucydides",
+    "title": "History of the Peloponnesian War",
+    "category": "History",
+    "tradition": "Greek",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 9,
+    "author": "Sophocles",
+    "title": "Oedipus the King",
+    "category": "Tragedy",
+    "tradition": "Greek",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 10,
+    "author": "Euripides",
+    "title": "The Bacchae",
+    "category": "Tragedy",
+    "tradition": "Greek",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 11,
+    "author": "Aristophanes",
+    "title": "Clouds",
+    "category": "Comedy",
+    "tradition": "Greek",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 22,
+    "author": "Epictetus",
+    "title": "Enchiridion",
+    "category": "Philosophy",
+    "tradition": "Stoic",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 23,
+    "author": "Marcus Aurelius",
+    "title": "Meditations",
+    "category": "Philosophy",
+    "tradition": "Stoic",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 25,
+    "author": "The Hebrew Bible",
+    "title": "Genesis",
+    "category": "Scripture",
+    "tradition": "Biblical",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 26,
+    "author": "The Hebrew Bible",
+    "title": "Job",
+    "category": "Scripture",
+    "tradition": "Biblical",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 27,
+    "author": "The New Testament",
+    "title": "Gospel of Matthew",
+    "category": "Scripture",
+    "tradition": "Biblical",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 30,
+    "author": "Cicero",
+    "title": "On Duties",
+    "category": "Political Thought",
+    "tradition": "Roman",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 31,
+    "author": "Seneca",
+    "title": "Letters from a Stoic",
+    "category": "Philosophy",
+    "tradition": "Roman",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 33,
+    "author": "Augustine",
+    "title": "City of God",
+    "category": "Theology",
+    "tradition": "Late Antique",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 34,
+    "author": "Boethius",
+    "title": "Consolation of Philosophy",
+    "category": "Philosophy",
+    "tradition": "Late Antique",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 39,
+    "author": "Christine de Pizan",
+    "title": "The Book of the City of Ladies",
+    "category": "Political Thought",
+    "tradition": "Medieval",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 41,
+    "author": "Machiavelli",
+    "title": "Discourses on Livy",
+    "category": "Political Thought",
+    "tradition": "Renaissance",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 42,
+    "author": "Thomas More",
+    "title": "Utopia",
+    "category": "Political Thought",
+    "tradition": "Renaissance",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 43,
+    "author": "Montaigne",
+    "title": "Essays",
+    "category": "Essay",
+    "tradition": "Early Modern",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 44,
+    "author": "Pascal",
+    "title": "Pensées",
+    "category": "Philosophy",
+    "tradition": "Early Modern",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 54,
+    "author": "Rousseau",
+    "title": "The Social Contract",
+    "category": "Political Philosophy",
+    "tradition": "Enlightenment",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 55,
+    "author": "Adam Smith",
+    "title": "The Wealth of Nations",
+    "category": "Political Economy",
+    "tradition": "Enlightenment",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 56,
+    "author": "Adam Smith",
+    "title": "The Theory of Moral Sentiments",
+    "category": "Moral Philosophy",
+    "tradition": "Enlightenment",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 57,
+    "author": "Immanuel Kant",
+    "title": "Groundwork of the Metaphysics of Morals",
+    "category": "Philosophy",
+    "tradition": "Enlightenment",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 58,
+    "author": "Immanuel Kant",
+    "title": "What Is Enlightenment?",
+    "category": "Essay",
+    "tradition": "Enlightenment",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 59,
+    "author": "Edmund Burke",
+    "title": "Reflections on the Revolution in France",
+    "category": "Political Thought",
+    "tradition": "Modern",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 60,
+    "author": "Mary Wollstonecraft",
+    "title": "A Vindication of the Rights of Woman",
+    "category": "Political Thought",
+    "tradition": "Modern",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 63,
+    "author": "Goethe",
+    "title": "Faust Part One",
+    "category": "Drama",
+    "tradition": "Modern",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 64,
+    "author": "Hegel",
+    "title": "Introduction to the Philosophy of History",
+    "category": "Philosophy",
+    "tradition": "Modern",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 65,
+    "author": "John Stuart Mill",
+    "title": "On Liberty",
+    "category": "Political Philosophy",
+    "tradition": "Modern",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 66,
+    "author": "Karl Marx and Friedrich Engels",
+    "title": "The Communist Manifesto",
+    "category": "Political Thought",
+    "tradition": "Modern",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 67,
+    "author": "Karl Marx",
+    "title": "Capital Volume I",
+    "category": "Political Economy",
+    "tradition": "Modern",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 68,
+    "author": "Charles Darwin",
+    "title": "On the Origin of Species",
+    "category": "Science",
+    "tradition": "Modern",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 69,
+    "author": "Charles Darwin",
+    "title": "The Descent of Man",
+    "category": "Science",
+    "tradition": "Modern",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 70,
+    "author": "Frederick Douglass",
+    "title": "Narrative of the Life of Frederick Douglass",
+    "category": "Autobiography",
+    "tradition": "Modern",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 71,
+    "author": "Nietzsche",
+    "title": "Beyond Good and Evil",
+    "category": "Philosophy",
+    "tradition": "Modern",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 72,
+    "author": "Nietzsche",
+    "title": "On the Genealogy of Morality",
+    "category": "Philosophy",
+    "tradition": "Modern",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 74,
+    "author": "Dostoevsky",
+    "title": "The Brothers Karamazov",
+    "category": "Novel",
+    "tradition": "Modern",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 75,
+    "author": "Tolstoy",
+    "title": "Anna Karenina",
+    "category": "Novel",
+    "tradition": "Modern",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 76,
+    "author": "Tolstoy",
+    "title": "The Death of Ivan Ilyich",
+    "category": "Novella",
+    "tradition": "Modern",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 77,
+    "author": "Henry David Thoreau",
+    "title": "Walden",
+    "category": "Essay",
+    "tradition": "Modern",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 78,
+    "author": "W.E.B. Du Bois",
+    "title": "The Souls of Black Folk",
+    "category": "Political Thought",
+    "tradition": "Modern",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 79,
+    "author": "Sigmund Freud",
+    "title": "Introductory Lectures on Psychoanalysis",
+    "category": "Psychology",
+    "tradition": "Modern",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 80,
+    "author": "Sigmund Freud",
+    "title": "Civilization and Its Discontents",
+    "category": "Psychology",
+    "tradition": "Modern",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 81,
+    "author": "William James",
+    "title": "Pragmatism",
+    "category": "Philosophy",
+    "tradition": "Modern",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 82,
+    "author": "Max Weber",
+    "title": "The Protestant Ethic and the Spirit of Capitalism",
+    "category": "Sociology",
+    "tradition": "Modern",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 83,
+    "author": "Joseph Conrad",
+    "title": "Heart of Darkness",
+    "category": "Novel",
+    "tradition": "Modern",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 84,
+    "author": "Franz Kafka",
+    "title": "The Metamorphosis",
+    "category": "Novella",
+    "tradition": "Modern",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 88,
+    "author": "T.S. Eliot",
+    "title": "The Waste Land",
+    "category": "Poetry",
+    "tradition": "Modernist",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 89,
+    "author": "Albert Camus",
+    "title": "The Stranger",
+    "category": "Novel",
+    "tradition": "20th Century",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 90,
+    "author": "Hannah Arendt",
+    "title": "The Human Condition",
+    "category": "Political Thought",
+    "tradition": "20th Century",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 91,
+    "author": "Simone Weil",
+    "title": "The Need for Roots",
+    "category": "Political Thought",
+    "tradition": "20th Century",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 92,
+    "author": "George Orwell",
+    "title": "1984",
+    "category": "Novel",
+    "tradition": "20th Century",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 93,
+    "author": "Rachel Carson",
+    "title": "Silent Spring",
+    "category": "Science",
+    "tradition": "20th Century",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 94,
+    "author": "Frantz Fanon",
+    "title": "The Wretched of the Earth",
+    "category": "Political Thought",
+    "tradition": "20th Century",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 95,
+    "author": "Martin Luther King Jr.",
+    "title": "Letter from Birmingham Jail",
+    "category": "Political Thought",
+    "tradition": "20th Century",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 96,
+    "author": "James Baldwin",
+    "title": "The Fire Next Time",
+    "category": "Essay",
+    "tradition": "20th Century",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 99,
+    "author": "Chinua Achebe",
+    "title": "Things Fall Apart",
+    "category": "Novel",
+    "tradition": "20th Century",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 100,
+    "author": "Albert O. Hirschman",
+    "title": "Exit, Voice, and Loyalty",
+    "category": "Political Thought",
+    "tradition": "20th Century",
+    "source_rank": 3,
+    "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  }
+]

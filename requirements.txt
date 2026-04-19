@@ -1,0 +1,3 @@
+anthropic>=0.52.0
+notion-client>=2.2.1
+python-dotenv>=1.0.1

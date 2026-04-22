@@ -2,6 +2,9 @@ name = "gbd-dispatch"
 main = "src/index.js"
 compatibility_date = "2026-01-15"
 
+# Expose on <name>.<account-subdomain>.workers.dev. Explicit in Wrangler v4.
+workers_dev = true
+
 # GITHUB_TOKEN is a secret — registered via:
 #   wrangler secret put GITHUB_TOKEN
 # (Do NOT put the token in this file.)

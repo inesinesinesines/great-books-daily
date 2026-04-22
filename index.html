@@ -220,7 +220,7 @@
     const GENERATE_WORKFLOW_URL = 'https://github.com/inesinesinesines/great-books-daily/actions/workflows/generate-book.yml';
     // Cloudflare Worker endpoint that proxies workflow_dispatch. Empty string
     // disables auto-dispatch and falls back to the Actions URL link.
-    const WORKER_URL = 'https://gbd-dispatch.gdb-dispath.workers.dev';
+    const WORKER_URL = 'https://gbd-dispatch.books-dailiy.workers.dev';
     const dispatchedBooks = new Set();
 
     function buildClientPreview(bookId, bookMeta){

@@ -10,7 +10,7 @@
     [data-theme="dark"]{--bg:#171614;--surface:#1c1b19;--surface2:#201f1d;--border:#393836;--text:#e0dfdb;--muted:#b3b1ab;--primary:#4f98a3;--inverse:#171614}
     *{box-sizing:border-box}body{margin:0;font-family:var(--font-body);background:var(--bg);color:var(--text)}
     .wrap{max-width:1180px;margin:0 auto;padding:24px}.top{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:24px}.btn{border:1px solid var(--border);background:var(--surface);color:var(--text);padding:12px 16px;border-radius:999px;cursor:pointer}.btn.primary{background:var(--primary);color:var(--inverse);border-color:var(--primary)}
-    .hero,.grid{display:grid;grid-template-columns:1.1fr .9fr;gap:24px}.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}.pad{padding:24px}.eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}h1,h2{font-family:var(--font-display);line-height:1.08;margin:0 0 12px}h1{font-size:34px}h2{font-size:30px}h3{margin:0 0 8px;font-size:16px}p{color:var(--muted);line-height:1.7}.chips{display:flex;gap:8px;flex-wrap:wrap}.chip{background:rgba(1,105,111,.08);color:var(--primary);padding:6px 10px;border-radius:999px;font-size:13px;font-weight:600}.chip.preview{background:rgba(180,120,0,.12);color:#a16207}.summary{display:grid;gap:12px;margin-top:16px}.block{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px}ul{margin:0;padding-left:18px}.qa textarea{width:100%;min-height:110px;padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--surface2);color:var(--text)}.muted{color:var(--muted)}.rec{display:grid;gap:10px}.rec-item{padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--surface2);cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease}.rec-item:hover,.rec-item:focus{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.08);border-color:var(--primary);outline:none}.rec-item:focus-visible{outline:2px solid var(--primary);outline-offset:2px}.rec-item strong{display:block}.small{font-size:13px;color:var(--muted)}@media(max-width:900px){.hero,.grid{grid-template-columns:1fr}.top{flex-direction:column;align-items:flex-start}}
+    .hero,.grid{display:grid;grid-template-columns:1.1fr .9fr;gap:24px}.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}.pad{padding:24px}.eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}h1,h2{font-family:var(--font-display);line-height:1.08;margin:0 0 12px}h1{font-size:34px}h2{font-size:30px}h3{margin:0 0 8px;font-size:16px}p{color:var(--muted);line-height:1.7}.chips{display:flex;gap:8px;flex-wrap:wrap}.chip{background:rgba(1,105,111,.08);color:var(--primary);padding:6px 10px;border-radius:999px;font-size:13px;font-weight:600}.chip.preview{background:rgba(180,120,0,.12);color:#a16207}.summary{display:grid;gap:12px;margin-top:16px}.block{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px}ul{margin:0;padding-left:18px}.qa textarea{width:100%;min-height:110px;padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--surface2);color:var(--text)}.muted{color:var(--muted)}.rec{display:grid;gap:10px}.rec-item{padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--surface2);cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease}.rec-item:hover,.rec-item:focus{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.08);border-color:var(--primary);outline:none}.rec-item:focus-visible{outline:2px solid var(--primary);outline-offset:2px}.rec-item strong{display:block}.small{font-size:13px;color:var(--muted)}.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--inverse);padding:12px 20px;border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.18);font-size:14px;z-index:1000;max-width:90vw;opacity:0;transition:opacity .2s ease}.toast.show{opacity:1}@media(max-width:900px){.hero,.grid{grid-template-columns:1fr}.top{flex-direction:column;align-items:flex-start}}
   </style>
 </head>
 <body>
@@ -66,6 +66,8 @@
         <p class="small">Perplexity는 이 페이지 안에서 직접 열리지 않을 수 있어 새 탭으로 연결합니다.</p>
       </div>
     </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
     <div class="grid" style="margin-top:24px">
       <div class="card pad">
@@ -141,7 +143,15 @@
       byId('previewBlock').hidden = !d.generated_client_side;
       if(d.generated_client_side){
         byId('previewNoticeText').textContent = d.preview_notice || '';
-        byId('generateBtn').href = d.generate_action_url || '#';
+        const btn = byId('generateBtn');
+        btn.href = d.generate_action_url || '#';
+        btn.textContent = dispatchedBooks.has(d.book_id) ? '생성 요청됨 ✓' : (WORKER_URL ? '정식 리포트 생성하기 (자동)' : '정식 리포트 생성하기 (GitHub Actions)');
+        btn.onclick = (e) => {
+          if(WORKER_URL){
+            e.preventDefault();
+            requestGeneration(d.book_id);
+          }
+        };
       }
       byId('oneLine').textContent = d.one_line || '';
       byId('summaryList').innerHTML = (d.summary || []).map(x => `<li>${escapeHtml(x)}</li>`).join('');
@@ -208,6 +218,10 @@
     function previewKey(id){ return `book-preview-${id}`; }
 
     const GENERATE_WORKFLOW_URL = 'https://github.com/inesinesinesines/great-books-daily/actions/workflows/generate-book.yml';
+    // Cloudflare Worker endpoint that proxies workflow_dispatch. Empty string
+    // disables auto-dispatch and falls back to the Actions URL link.
+    const WORKER_URL = 'https://gbd-dispatch.gdb-dispath.workers.dev';
+    const dispatchedBooks = new Set();
 
     function buildClientPreview(bookId, bookMeta){
       const cached = localStorage.getItem(previewKey(bookId));
@@ -252,6 +266,53 @@
 
     function scrollToTop(){
       window.scrollTo({top:0, behavior:'smooth'});
+    }
+
+    let toastTimer = null;
+    function showToast(msg, ms = 4000){
+      const el = byId('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), ms);
+    }
+
+    async function requestGeneration(bookId){
+      if(!WORKER_URL){
+        window.open(GENERATE_WORKFLOW_URL, '_blank', 'noopener,noreferrer');
+        return;
+      }
+      if(dispatchedBooks.has(bookId)){
+        showToast(`book_id=${bookId} 생성은 이미 요청됨. 1~2분 후 새로고침해 주세요.`);
+        return;
+      }
+      const btn = byId('generateBtn');
+      const originalText = btn.textContent;
+      btn.setAttribute('aria-busy', 'true');
+      btn.textContent = '생성 요청 중...';
+      try{
+        const res = await fetch(WORKER_URL, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({book_id: bookId})
+        });
+        if(res.ok || res.status === 202){
+          dispatchedBooks.add(bookId);
+          btn.textContent = '생성 요청됨 ✓';
+          showToast(`book_id=${bookId} 생성을 요청했어요. 약 1~2분 뒤 새로고침하면 정식 리포트가 표시됩니다.`, 7000);
+        }else{
+          const text = await res.text().catch(() => '');
+          btn.textContent = originalText;
+          showToast(`생성 요청 실패 (HTTP ${res.status}). GitHub Actions 페이지에서 수동 실행하세요.`, 7000);
+          console.error('dispatch failed:', res.status, text);
+        }
+      }catch(err){
+        btn.textContent = originalText;
+        showToast('네트워크 오류. GitHub Actions 페이지에서 수동 실행하세요.', 6000);
+        console.error('dispatch error:', err);
+      }finally{
+        btn.removeAttribute('aria-busy');
+      }
     }
 
     async function loadBookReport(bookId){

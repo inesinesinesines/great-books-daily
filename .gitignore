@@ -11,3 +11,8 @@ __pycache__/
 
 # Local Claude Code config
 .claude/
+
+# Never commit credentials
+githubkey.txt
+*.token
+*.pat

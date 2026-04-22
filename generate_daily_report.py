@@ -9,7 +9,7 @@ from anthropic import Anthropic
 load_dotenv()
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
-CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-5-20250929")
+CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-5-20250514")
 START_DATE = os.getenv("START_DATE", "2026-04-20")
 TIMEZONE = os.getenv("TIMEZONE", "Asia/Seoul")
 OUTPUT_DIR = Path(os.getenv("OUTPUT_DIR", "./data"))
@@ -183,7 +183,8 @@ def main():
     prompt = build_prompt(book, today_str, recommendations)
     try:
         report = call_claude(prompt)
-    except Exception:
+    except Exception as e:
+        print(f"[WARN] Claude API failed: {e}", flush=True)
         report = fallback_report(book, today_str, recommendations)
     save_report(report)
     print(json.dumps(report, ensure_ascii=False, indent=2))

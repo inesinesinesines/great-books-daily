@@ -11,7 +11,10 @@ from anthropic import Anthropic
 load_dotenv()
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
-CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-5-20250514")
+# Defaults to Opus 4.7 (most capable current model). Override by setting the
+# CLAUDE_MODEL env var / GitHub Actions secret (e.g., to claude-sonnet-4-6
+# for faster/cheaper runs). An empty string still falls back to the default.
+CLAUDE_MODEL = os.getenv("CLAUDE_MODEL") or "claude-opus-4-7"
 START_DATE = os.getenv("START_DATE", "2026-04-20")
 TIMEZONE = os.getenv("TIMEZONE", "Asia/Seoul")
 OUTPUT_DIR = Path(os.getenv("OUTPUT_DIR", "./data"))

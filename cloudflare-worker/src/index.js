@@ -61,9 +61,28 @@ export default {
       return json({ error: "invalid_json" }, { status: 400 }, cors);
     }
 
-    const bookId = Number(body?.book_id);
-    if (!Number.isInteger(bookId) || bookId < 1 || bookId > 500) {
-      return json({ error: "invalid_book_id" }, { status: 400 }, cors);
+    // Two modes: by book_id (curated catalog), or by (title, author) for
+    // external classics dynamically registered in books.json.
+    let inputs, replyPayload;
+    if (body?.kind === "external" || (body?.title && body?.author && !body?.book_id)) {
+      const title = String(body.title || "").trim();
+      const author = String(body.author || "").trim();
+      if (!title || !author || title.length > 200 || author.length > 100) {
+        return json({ error: "invalid_title_or_author" }, { status: 400 }, cors);
+      }
+      // Guard against header/newline injection through workflow inputs
+      if (/[\r\n\x00]/.test(title) || /[\r\n\x00]/.test(author)) {
+        return json({ error: "invalid_chars" }, { status: 400 }, cors);
+      }
+      inputs = { title, author };
+      replyPayload = { kind: "external", title, author };
+    } else {
+      const bookId = Number(body?.book_id);
+      if (!Number.isInteger(bookId) || bookId < 1 || bookId > 500) {
+        return json({ error: "invalid_book_id" }, { status: 400 }, cors);
+      }
+      inputs = { book_id: String(bookId) };
+      replyPayload = { kind: "curated", book_id: bookId };
     }
 
     if (!env.GITHUB_TOKEN) {
@@ -81,10 +100,7 @@ export default {
           "User-Agent": "gbd-dispatch-worker",
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          ref: REF,
-          inputs: { book_id: String(bookId) },
-        }),
+        body: JSON.stringify({ ref: REF, inputs }),
       },
     );
 
@@ -92,7 +108,7 @@ export default {
       return json(
         {
           ok: true,
-          book_id: bookId,
+          ...replyPayload,
           actions_url: `https://github.com/${REPO}/actions/workflows/${WORKFLOW_FILE}`,
           message: "dispatched — wait ~1-2 minutes then refresh",
         },

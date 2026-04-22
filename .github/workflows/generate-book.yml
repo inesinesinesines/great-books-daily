@@ -4,8 +4,16 @@ on:
   workflow_dispatch:
     inputs:
       book_id:
-        description: 'Book ID to generate a report for (see books.json)'
-        required: true
+        description: 'Book ID (curated catalog). Leave empty if using title+author.'
+        required: false
+        type: string
+      title:
+        description: 'External classic title (required if book_id is empty)'
+        required: false
+        type: string
+      author:
+        description: 'External classic author (required if book_id is empty)'
+        required: false
         type: string
 
 permissions:
@@ -30,7 +38,8 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
 
-      - name: Generate report for book_id=${{ inputs.book_id }}
+      - name: Generate report (curated or external)
+        id: gen
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           CLAUDE_MODEL: ${{ secrets.CLAUDE_MODEL }}
@@ -38,9 +47,32 @@ jobs:
           TIMEZONE: ${{ secrets.TIMEZONE }}
           START_DATE: ${{ secrets.START_DATE }}
           OUTPUT_DIR: ./data
-        run: python generate_daily_report.py "${{ inputs.book_id }}"
+          INPUT_BOOK_ID: ${{ inputs.book_id }}
+          INPUT_TITLE: ${{ inputs.title }}
+          INPUT_AUTHOR: ${{ inputs.author }}
+        run: |
+          if [ -n "$INPUT_BOOK_ID" ]; then
+            echo "mode=curated book_id=$INPUT_BOOK_ID"
+            python generate_daily_report.py "$INPUT_BOOK_ID"
+            echo "dispatch_key=$INPUT_BOOK_ID" >> "$GITHUB_OUTPUT"
+          elif [ -n "$INPUT_TITLE" ] && [ -n "$INPUT_AUTHOR" ]; then
+            echo "mode=external title=$INPUT_TITLE author=$INPUT_AUTHOR"
+            python generate_daily_report.py --external "$INPUT_TITLE" "$INPUT_AUTHOR"
+            # Resolve the assigned book_id from books.json for the Notion step
+            BID=$(python -c "import json; \
+              from generate_daily_report import _normalize; \
+              books = json.load(open('books.json', encoding='utf-8')); \
+              t=_normalize('''$INPUT_TITLE'''); a=_normalize('''$INPUT_AUTHOR'''); \
+              match=[b for b in books if _normalize(b['title'])==t and _normalize(b['author'])==a]; \
+              print(match[0]['id'] if match else '')")
+            echo "resolved book_id=$BID"
+            echo "dispatch_key=$BID" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::must supply book_id OR (title AND author)"; exit 1
+          fi
 
       - name: Push report to Notion
+        if: steps.gen.outputs.dispatch_key != ''
         env:
           NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
           NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
@@ -50,13 +82,13 @@ jobs:
           OUTPUT_DIR: ./data
           WEB_APP_URL: https://inesinesinesines.github.io/great-books-daily/
           JSON_BASE_URL: https://inesinesinesines.github.io/great-books-daily/data
-        run: python push_to_notion.py "${{ inputs.book_id }}"
+        run: python push_to_notion.py "${{ steps.gen.outputs.dispatch_key }}"
 
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/daily data/books-index.json data/today.json || true
+          git add data/daily data/books-index.json data/today.json books.json || true
           git diff --cached --quiet && echo "No changes to commit" && exit 0
-          git commit -m "Generate on-demand report for book_id=${{ inputs.book_id }}"
+          git commit -m "Generate on-demand report (${{ steps.gen.outputs.dispatch_key }})"
           git push

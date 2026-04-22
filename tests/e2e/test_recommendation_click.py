@@ -201,34 +201,67 @@ def test_e2e_07_no_api_key_exposed(page, http_server):
     assert "sk-ant" not in body
 
 
-def test_e2e_09_external_rec_opens_perplexity(page, http_server):
-    # @requirement external recommendations (not in 100-book list) must open
-    # Perplexity in a new tab when clicked, rather than trying to load a report.
-    _goto(page, http_server)
-    # Swap today's recommendations for a synthetic external one and re-render.
-    # We exercise the real renderRecommendations + real click handler; only
-    # the data is synthetic (mimicking what Claude will emit going forward).
+def test_e2e_09a_external_rec_without_worker_falls_back_to_perplexity(page, http_server):
+    # @requirement fallback when Worker is unavailable
+    _goto(page, http_server, disable_worker=True)
     page.evaluate(
         """renderRecommendations([
           {title: 'Prometheus Bound', author: 'Aeschylus', reason: '비극 확장', external: true}
         ]);"""
     )
-    # The rec card should NOT carry a data-book-id (it's external)
-    bid_attr = page.get_attribute(
-        "#recommendations .rec-item", "data-book-id"
-    )
+    bid_attr = page.get_attribute("#recommendations .rec-item", "data-book-id")
     assert bid_attr is None
-    # And the badge hint should be present
     html = page.inner_html("#recommendations .rec-item")
     assert "Perplexity에서 열기" in html
-
-    # Clicking should open a new tab/window at perplexity.ai
     with page.context.expect_page(timeout=5000) as new_page_info:
         page.locator("#recommendations .rec-item").click()
     new_page = new_page_info.value
     new_page.wait_for_load_state("domcontentloaded", timeout=8000)
     assert "perplexity.ai" in new_page.url
-    assert "Prometheus" in new_page.url or "Prometheus" in (new_page.url or "")
+
+
+def test_e2e_09b_external_rec_with_worker_enters_generating_state(page, http_server):
+    # @requirement external rec clicks trigger Worker dispatch + generating UI
+    _goto(page, http_server)
+    # Point WORKER_URL at unroutable loopback — dispatch will fail fast, but
+    # we only need to observe the SYNCHRONOUS generating state that render()
+    # draws before the dispatch await resolves.
+    page.evaluate("WORKER_URL = 'http://127.0.0.1:1';")
+    page.evaluate(
+        """renderRecommendations([
+          {title: 'Prometheus Bound', author: 'Aeschylus', reason: '비극 확장', external: true}
+        ]);"""
+    )
+    # Badge now reads '리포트 생성' when a Worker is configured
+    html = page.inner_html("#recommendations .rec-item")
+    assert "리포트 생성" in html
+    # Capture render state via instrumentation (same pattern as e2e_03b)
+    calls = page.evaluate(
+        """(async () => {
+          window.__calls = [];
+          const orig = window.render;
+          window.render = function(d){
+            const r = orig(d);
+            window.__calls.push({
+              generating: !!d.generating,
+              title: d.title,
+              author: d.author,
+              chipVisible: !document.getElementById('generatingChip').hidden,
+              blockVisible: !document.getElementById('generatingBlock').hidden,
+            });
+            return r;
+          };
+          document.querySelector('#recommendations .rec-item').click();
+          await new Promise(r => setTimeout(r, 400));
+          return window.__calls;
+        })()"""
+    )
+    generating = [c for c in calls if c["generating"]]
+    assert len(generating) >= 1, f"no generating render observed. calls={calls}"
+    assert generating[0]["title"] == "Prometheus Bound"
+    assert generating[0]["author"] == "Aeschylus"
+    assert generating[0]["chipVisible"] is True
+    assert generating[0]["blockVisible"] is True
 
 
 def test_e2e_08_rapid_clicks_render_only_last(page, http_server):

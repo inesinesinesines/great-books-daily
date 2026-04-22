@@ -126,7 +126,9 @@
         const titleAttr = ` data-title="${escapeHtml(r.title || '')}" data-author="${escapeHtml(r.author || '')}"`;
         const badge = hasInternalId
           ? ''
-          : ' <span class="small muted" style="font-weight:400">↗ Perplexity에서 열기</span>';
+          : (WORKER_URL
+             ? ' <span class="small muted" style="font-weight:400">→ 리포트 생성</span>'
+             : ' <span class="small muted" style="font-weight:400">↗ Perplexity에서 열기</span>');
         return `
           <div class="rec-item" role="button" tabindex="0"${idAttr}${titleAttr} aria-label="${escapeHtml(r.title)} · ${escapeHtml(r.author)}">
             <strong>${escapeHtml(r.title)}${badge}</strong>
@@ -143,8 +145,11 @@
         const trigger = () => {
           if(Number.isInteger(bid)){
             loadBookReport(bid);
+          } else if(title && author){
+            loadExternalBookReport(title, author);
           } else {
-            const q = encodeURIComponent(`${author}의 ${title}을(를) 설명해줘. 핵심 주장과 현대적 의미를 포함해서.`);
+            // Last-resort: open Perplexity search with whatever we have
+            const q = encodeURIComponent(`${author}의 ${title}을(를) 설명해줘.`);
             window.open(`https://www.perplexity.ai/search/new?q=${q}`, '_blank', 'noopener,noreferrer');
           }
         };
@@ -385,16 +390,20 @@
       }catch{ return null; }
     }
 
-    async function dispatchViaWorker(bookId){
+    async function dispatchViaWorker(payload){
       if(!WORKER_URL) return { ok:false, reason:'no_worker' };
+      // Backward-compat: a bare bookId argument stays supported
+      const body = (typeof payload === 'number' || typeof payload === 'string')
+        ? { book_id: Number(payload) }
+        : payload;
       try{
         const res = await fetch(WORKER_URL, {
           method:'POST',
           headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({book_id: bookId})
+          body: JSON.stringify(body)
         });
         if(res.ok || res.status === 202){
-          dispatchedBooks.add(bookId);
+          if(body.book_id) dispatchedBooks.add(Number(body.book_id));
           return { ok:true };
         }
         let errBody = '';
@@ -402,6 +411,90 @@
         return { ok:false, reason:`http_${res.status}`, body:errBody };
       }catch(err){
         return { ok:false, reason:'network', error:String(err).slice(0, 200) };
+      }
+    }
+
+    function normalizeStr(s){
+      return String(s || '').trim().toLowerCase().split(/\s+/).filter(Boolean).join(' ');
+    }
+
+    async function pollForExternalReport(titleNorm, authorNorm, token){
+      const start = Date.now();
+      while(Date.now() - start < POLL_TIMEOUT_MS){
+        if(token !== clickToken) return false;
+        const elapsed = Math.floor((Date.now() - start) / 1000);
+        const pg = byId('generatingProgress');
+        if(pg) pg.textContent = `Claude 작성 중 · ${elapsed}초 경과 (보통 60~120초)`;
+        await sleep(POLL_INTERVAL_MS);
+        if(token !== clickToken) return false;
+        const idx = await fetchFreshIndex();
+        if(!idx || !idx.books) continue;
+        for(const [bid, entry] of Object.entries(idx.books)){
+          if(entry.external && entry.title_norm === titleNorm && entry.author_norm === authorNorm && entry.latest){
+            try{
+              const d = await loadDate(entry.latest);
+              if(token !== clickToken) return false;
+              render(d);
+              return true;
+            }catch{/* keep polling until Pages catches up */}
+          }
+        }
+      }
+      return false;
+    }
+
+    async function loadExternalBookReport(title, author){
+      const token = ++clickToken;
+      const titleNorm = normalizeStr(title);
+      const authorNorm = normalizeStr(author);
+      // Fast path: already in the index?
+      const idx = await fetchFreshIndex();
+      if(idx && idx.books){
+        for(const [, entry] of Object.entries(idx.books)){
+          if(entry.external && entry.title_norm === titleNorm && entry.author_norm === authorNorm && entry.latest){
+            try{
+              const d = await loadDate(entry.latest);
+              if(token !== clickToken) return;
+              render(d);
+              scrollToTop();
+              return;
+            }catch{/* fall through to (re)dispatch */}
+          }
+        }
+      }
+      if(!WORKER_URL){
+        // No Worker configured — fall back to Perplexity as before
+        const q = encodeURIComponent(`${author}의 ${title}을(를) 설명해줘. 핵심 주장과 현대적 의미를 포함해서.`);
+        window.open(`https://www.perplexity.ai/search/new?q=${q}`, '_blank', 'noopener,noreferrer');
+        return;
+      }
+      render({
+        date: fmtDate(new Date()),
+        book_id: null,
+        author, title,
+        category: 'Classic', tradition: 'External',
+        source_rank: 4, source_basis: '',
+        reading_mode: '생성 중',
+        one_line: '', summary: [], keywords: [],
+        why_now: '', discussion_question: '',
+        perplexity_followup_prompt: `${author}의 ${title}을 설명해줘`,
+        next_recommendations: [], source_note: '',
+        generating: true
+      });
+      scrollToTop();
+      const dispatch = await dispatchViaWorker({ kind: 'external', title, author });
+      if(token !== clickToken) return;
+      if(!dispatch.ok){
+        console.error('external dispatch failed:', dispatch);
+        showToast('생성 요청 실패. Perplexity 탭으로 대체합니다.', 6000);
+        const q = encodeURIComponent(`${author}의 ${title}을(를) 설명해줘.`);
+        window.open(`https://www.perplexity.ai/search/new?q=${q}`, '_blank', 'noopener,noreferrer');
+        return;
+      }
+      const ok = await pollForExternalReport(titleNorm, authorNorm, token);
+      if(token !== clickToken) return;
+      if(!ok){
+        showToast('시간이 오래 걸리고 있어요. 1분 뒤 페이지를 새로고침해 주세요.', 8000);
       }
     }
 

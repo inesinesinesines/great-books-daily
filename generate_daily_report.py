@@ -22,13 +22,59 @@ BOOKS_PATH = Path(__file__).parent / "books.json"
 READING_MODE = os.getenv("READING_MODE", "ranked").strip().lower()
 
 
-def load_books():
+def load_books(include_external: bool = False):
+    """Load the curated book catalog from books.json.
+
+    include_external=False (default) excludes books with source_rank >= 4 so
+    they don't pollute the daily rotation (pick_book). External books are
+    entries added dynamically from user-triggered recommendations.
+    """
     books = json.loads(BOOKS_PATH.read_text(encoding="utf-8"))
+    if not include_external:
+        books = [b for b in books if b.get("source_rank", 3) <= 3]
     if READING_MODE == "strict":
         return [b for b in books if b.get("source_rank", 3) <= 2]
-    if READING_MODE == "extended":
-        return books
     return books
+
+
+def _normalize(s: str) -> str:
+    return " ".join((s or "").strip().lower().split())
+
+
+def add_external_book(title: str, author: str) -> dict:
+    """Add or return a book entry for a user-requested external classic.
+
+    Dedupes on (normalized author, normalized title). If an entry already
+    exists (regardless of source_rank) it is returned unchanged. New entries
+    are appended to books.json with source_rank=4 so pick_book's daily
+    rotation is not affected.
+    """
+    title = (title or "").strip()
+    author = (author or "").strip()
+    if not title or not author:
+        raise ValueError("title and author are required for external book")
+
+    books = json.loads(BOOKS_PATH.read_text(encoding="utf-8"))
+    key = (_normalize(author), _normalize(title))
+    for b in books:
+        if (_normalize(b.get("author", "")), _normalize(b.get("title", ""))) == key:
+            return b
+
+    new_id = max((b.get("id", 0) for b in books), default=0) + 1
+    entry = {
+        "id": new_id,
+        "author": author,
+        "title": title,
+        "category": "Classic",
+        "tradition": "Unknown",
+        "source_rank": 4,
+        "source_basis": "User-requested external recommendation",
+    }
+    books.append(entry)
+    BOOKS_PATH.write_text(
+        json.dumps(books, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    return entry
 
 
 def get_today_local():
@@ -191,10 +237,19 @@ def rebuild_books_index(output_dir: Path) -> dict:
 
     Returns the index dict. Reports without a 'book_id' field are skipped.
     Dates within each book entry are sorted ascending; 'latest' is the max.
+    External books (source_rank>=4, if present in books.json) get normalized
+    title/author fields so the client can match by (author, title).
     """
     output_dir = Path(output_dir)
     daily_dir = output_dir / 'daily'
     books: dict[str, dict] = {}
+    # Build a catalog lookup once so we can annotate external entries
+    try:
+        catalog = json.loads(BOOKS_PATH.read_text(encoding='utf-8'))
+    except (OSError, json.JSONDecodeError):
+        catalog = []
+    catalog_by_id = {b.get('id'): b for b in catalog}
+
     if daily_dir.exists():
         for path in sorted(daily_dir.glob('*.json')):
             try:
@@ -211,6 +266,12 @@ def rebuild_books_index(output_dir: Path) -> dict:
             entry = books.setdefault(key, {'latest': '', 'dates': []})
             if date_str not in entry['dates']:
                 entry['dates'].append(date_str)
+            cat = catalog_by_id.get(bid) or {}
+            if cat.get('source_rank', 3) >= 4:
+                entry['external'] = True
+                entry['title_norm'] = _normalize(data.get('title') or cat.get('title', ''))
+                entry['author_norm'] = _normalize(data.get('author') or cat.get('author', ''))
+
     for entry in books.values():
         entry['dates'].sort()
         entry['latest'] = entry['dates'][-1] if entry['dates'] else ''
@@ -255,10 +316,14 @@ def generate_for_date(target_date: date, update_today: bool = True, force: bool 
         print(json.dumps(report, ensure_ascii=False, indent=2))
         return report
 
-    books = load_books()
-    book, idx = pick_book(target_date, books)
-    fallback_recs = next_books(idx, books, 3)  # only used if Claude fails
-    excluded_titles = [f"{b['author']} / {b['title']}" for b in books]
+    # For per-book on-demand generation, the book may live outside the
+    # curated 100 (source_rank=4). Look up with externals included.
+    rotation_books = load_books()  # daily rotation excludes externals
+    full_books = load_books(include_external=True)
+    # pick_book operates on a full list indexed by canonical date.
+    book, idx = pick_book(target_date, full_books)
+    fallback_recs = next_books(idx, rotation_books, 3)  # only used if Claude fails
+    excluded_titles = [f"{b['author']} / {b['title']}" for b in full_books]
     prompt = build_prompt(book, target_str, excluded_titles)
     try:
         report = call_claude(prompt)
@@ -271,7 +336,8 @@ def generate_for_date(target_date: date, update_today: bool = True, force: bool 
 
 
 def date_for_book_id(book_id: int) -> date:
-    books = load_books()
+    # Search external-inclusive list first so externally-added books resolve.
+    books = load_books(include_external=True)
     for idx, b in enumerate(books):
         if b.get("id") == book_id:
             start = datetime.strptime(START_DATE, "%Y-%m-%d").date()
@@ -287,9 +353,29 @@ def _parse_arg(arg: str) -> date:
     raise ValueError(f"Argument must be YYYY-MM-DD or a book_id integer, got: {arg!r}")
 
 
+def generate_for_external(title: str, author: str, update_today: bool = False, force: bool = False) -> dict:
+    """Register an external classic in books.json, then run the normal
+    generate_for_date pipeline against its canonical date.
+    Returns the generated report.
+    """
+    entry = add_external_book(title, author)
+    target_date = date_for_book_id(entry["id"])
+    return generate_for_date(target_date, update_today=update_today, force=force)
+
+
 def main():
     args = [a for a in sys.argv[1:] if a]
     force = "--force" in args
+
+    if "--external" in args:
+        i = args.index("--external")
+        rest = [a for a in args[i + 1 :] if not a.startswith("--")]
+        if len(rest) < 2:
+            raise SystemExit('--external requires: --external "<title>" "<author>"')
+        title, author = rest[0], rest[1]
+        generate_for_external(title, author, update_today=False, force=force)
+        return
+
     positional = [a for a in args if not a.startswith("--")]
     if positional:
         target = _parse_arg(positional[0])

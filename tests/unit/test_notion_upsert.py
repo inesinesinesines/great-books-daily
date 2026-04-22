@@ -23,20 +23,28 @@ class _Namespace:
 class FakeNotion:
     """Minimal Notion client stub exercising the create-or-update contract.
 
-    Covers both the legacy `notion.databases.query(...)` call AND the raw
-    `notion.request(path='databases/<id>/query', ...)` call that newer
-    notion-client versions require after they dropped databases.query.
+    Can simulate three eras:
+      * legacy (<2.5 + old Notion-Version): databases.query available
+      * modern (2.5+ + 2025-09 API): data_sources endpoint required
+      * pure-raw: neither typed endpoint is available, only request()
     """
 
-    def __init__(self, existing_pages=None, expose_databases_query=True):
-        # existing_pages: list of dicts like
-        #   {"id": "page-xyz", "book_id": 5, "date": "2026-04-22", "children": [...]}
+    def __init__(
+        self,
+        existing_pages=None,
+        expose_databases_query=True,
+        legacy_query_works=True,
+        expose_data_sources=True,
+    ):
         self.existing_pages = list(existing_pages or [])
-        self.calls = []  # ordered log of (method, kwargs)
+        self.calls = []
+        self.legacy_query_works = legacy_query_works
+        self.data_source_id = "ds-fake-1"
 
         self.databases = _Namespace()
+        self.databases.retrieve = self._db_retrieve
         if expose_databases_query:
-            self.databases.query = self._db_query
+            self.databases.query = self._db_query_maybe_fail
 
         self.pages = _Namespace()
         self.pages.create = self._pages_create
@@ -49,22 +57,27 @@ class FakeNotion:
         children.append = self._blocks_children_append
         self.blocks.children = children
 
-    def request(self, path, method, query=None, body=None, auth=None):
-        """Raw-request shim used by newer notion-client releases."""
-        self.calls.append(("request", {"path": path, "method": method}))
-        if method == "POST" and path.startswith("databases/") and path.endswith("/query"):
-            body = body or {}
-            return self._db_query(
-                database_id=path.split("/")[1],
-                filter=body.get("filter", {}),
-                page_size=body.get("page_size", 10),
-            )
-        raise NotImplementedError(f"FakeNotion.request unsupported: {method} {path}")
+        if expose_data_sources:
+            self.data_sources = _Namespace()
+            self.data_sources.query = self._data_sources_query
 
-    def _db_query(self, database_id, filter, page_size=10, **_):
+    def _db_query_maybe_fail(self, database_id, filter, page_size=10, **_):
         self.calls.append(("databases.query", {"database_id": database_id, "filter": filter}))
-        # Match on the (Book ID, Date) filter the production code uses
-        filters = filter.get("and", [])
+        if not self.legacy_query_works:
+            # Simulate the 400 returned by 2025-09 API on the legacy path
+            raise RuntimeError("Invalid request URL (simulated 400)")
+        return self._match(filter, page_size)
+
+    def _db_retrieve(self, database_id, **_):
+        self.calls.append(("databases.retrieve", {"database_id": database_id}))
+        return {"id": database_id, "data_sources": [{"id": self.data_source_id}]}
+
+    def _data_sources_query(self, data_source_id, filter, page_size=10, **_):
+        self.calls.append(("data_sources.query", {"data_source_id": data_source_id, "filter": filter}))
+        return self._match(filter, page_size)
+
+    def _match(self, filter_expr, page_size):
+        filters = filter_expr.get("and", [])
         want_book = next(f for f in filters if "Book ID" in f["property"])["number"]["equals"]
         want_date = next(f for f in filters if "Date" in f["property"])["date"]["equals"]
         matches = [
@@ -73,6 +86,19 @@ class FakeNotion:
             if p["book_id"] == want_book and p["date"] == want_date
         ]
         return {"results": matches[:page_size]}
+
+    def request(self, path, method, query=None, body=None, auth=None):
+        """Raw-request shim. Used only when neither typed endpoint is mounted."""
+        self.calls.append(("request", {"path": path, "method": method}))
+        body = body or {}
+        if method == "GET" and path.startswith("databases/") and "/" not in path[len("databases/"):]:
+            return self._db_retrieve(database_id=path.split("/")[1])
+        if method == "POST" and path.startswith("data_sources/") and path.endswith("/query"):
+            return self._match(body.get("filter", {}), body.get("page_size", 10))
+        if method == "POST" and path.startswith("databases/") and path.endswith("/query"):
+            return self._match(body.get("filter", {}), body.get("page_size", 10))
+        raise NotImplementedError(f"FakeNotion.request unsupported: {method} {path}")
+
 
     def _pages_create(self, parent, properties, children):
         self.calls.append(("pages.create", {"parent": parent}))
@@ -191,18 +217,27 @@ def test_upsert_different_book_same_date_creates_new(sample_report):
     assert len(notion.existing_pages) == 2
 
 
-def test_upsert_falls_back_to_raw_request_when_databases_query_missing(sample_report):
+def test_upsert_falls_back_to_data_sources_when_databases_query_missing(sample_report):
     # @requirement compat with notion-client 2.5+ (databases.query removed)
     notion = FakeNotion(existing_pages=[], expose_databases_query=False)
     assert not hasattr(notion.databases, "query"), "fake must not expose databases.query"
     result = ptn.upsert_report(notion, "db-id", sample_report)
     assert result["action"] == "create"
     methods = [c[0] for c in notion.calls]
-    # Production code must reach for raw request since databases.query is missing
-    request_calls = [c for c in notion.calls if c[0] == "request"]
-    assert len(request_calls) == 1
-    assert request_calls[0][1]["method"] == "POST"
-    assert "/query" in request_calls[0][1]["path"]
+    # Must resolve the data source and query it — not the legacy path
+    assert "databases.retrieve" in methods
+    assert "data_sources.query" in methods
+
+
+def test_upsert_falls_back_from_legacy_400_to_data_sources(sample_report):
+    # @requirement compat with Notion API 2025-09 (databases/*/query returns 400)
+    notion = FakeNotion(existing_pages=[], legacy_query_works=False)
+    result = ptn.upsert_report(notion, "db-id", sample_report)
+    assert result["action"] == "create"
+    methods = [c[0] for c in notion.calls]
+    # Legacy path attempted, failed, then data_sources path used
+    assert methods[0] == "databases.query"
+    assert "data_sources.query" in methods
 
 
 def test_upsert_different_date_same_book_creates_new(sample_report):

@@ -88,15 +88,58 @@ def append_page_body(report: dict):
     return children
 
 
+def _resolve_data_source_id(notion, database_id: str) -> str | None:
+    """Fetch the first data_source id for a database. Returns None if the
+    database shape doesn't expose data_sources (pre-2025-09 API versions)."""
+    retrieve = getattr(getattr(notion, "databases", None), "retrieve", None)
+    if callable(retrieve):
+        try:
+            info = retrieve(database_id=database_id)
+        except Exception as exc:  # notion-client may raise on schema gaps
+            print(f"[WARN] databases.retrieve failed: {exc}", flush=True)
+            info = {}
+    else:
+        try:
+            info = notion.request(path=f"databases/{database_id}", method="GET")
+        except Exception as exc:
+            print(f"[WARN] raw databases GET failed: {exc}", flush=True)
+            return None
+    sources = (info or {}).get("data_sources") or []
+    if not sources:
+        return None
+    return sources[0].get("id")
+
+
 def _query_database(notion, database_id: str, filter_expr: dict, page_size: int = 1):
-    """Query a Notion database while staying compatible across notion-client
-    versions. Newer releases (2.5+) removed DatabasesEndpoint.query in favor
-    of the data_sources endpoint; the raw HTTP path still works on all
-    versions, so we call it directly as a fallback.
+    """Query a Notion database in a version-portable way.
+
+    Notion API 2025-09 removed the POST /v1/databases/{id}/query endpoint;
+    queries now target POST /v1/data_sources/{id}/query. notion-client 2.5+
+    exposes a matching `data_sources` endpoint. Older setups still support
+    `databases.query`. We try the legacy path first (cheaper, no extra
+    round-trip), then resolve the first data_source and query that.
     """
+    # 1. Legacy path: notion-client <2.5 and older Notion-Version headers.
     db_query = getattr(getattr(notion, "databases", None), "query", None)
     if callable(db_query):
-        return db_query(database_id=database_id, filter=filter_expr, page_size=page_size)
+        try:
+            return db_query(database_id=database_id, filter=filter_expr, page_size=page_size)
+        except Exception as exc:
+            print(f"[INFO] legacy databases.query failed, falling back to data_sources: {exc}", flush=True)
+
+    # 2. Modern path: data_sources/{id}/query
+    ds_id = _resolve_data_source_id(notion, database_id)
+    if ds_id:
+        ds_query = getattr(getattr(notion, "data_sources", None), "query", None)
+        if callable(ds_query):
+            return ds_query(data_source_id=ds_id, filter=filter_expr, page_size=page_size)
+        return notion.request(
+            path=f"data_sources/{ds_id}/query",
+            method="POST",
+            body={"filter": filter_expr, "page_size": page_size},
+        )
+
+    # 3. Last resort: hit the legacy REST path. Will 400 on 2025-09 API.
     return notion.request(
         path=f"databases/{database_id}/query",
         method="POST",

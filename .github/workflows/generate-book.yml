@@ -1,0 +1,50 @@
+name: Generate Book Report (on-demand)
+
+on:
+  workflow_dispatch:
+    inputs:
+      book_id:
+        description: 'Book ID to generate a report for (see books.json)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Generate report for book_id=${{ inputs.book_id }}
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_MODEL: ${{ secrets.CLAUDE_MODEL }}
+          READING_MODE: ${{ secrets.READING_MODE }}
+          TIMEZONE: ${{ secrets.TIMEZONE }}
+          START_DATE: ${{ secrets.START_DATE }}
+          OUTPUT_DIR: ./data
+        run: python generate_daily_report.py "${{ inputs.book_id }}"
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/daily data/books-index.json || true
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "Generate on-demand report for book_id=${{ inputs.book_id }}"
+          git push

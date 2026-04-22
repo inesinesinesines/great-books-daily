@@ -41,6 +41,11 @@
           <span class="chip preview" id="previewChip" hidden>프리뷰</span>
         </div>
         <div class="summary">
+          <div class="block" id="previewBlock" hidden>
+            <h3>정식 리포트 생성 안내</h3>
+            <p id="previewNoticeText"></p>
+            <a id="generateBtn" class="btn primary" href="#" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin-top:8px;text-decoration:none">정식 리포트 생성하기 (GitHub Actions)</a>
+          </div>
           <div class="block"><h3>한줄 요약</h3><p id="oneLine"></p></div>
           <div class="block"><h3>5분 요약</h3><ul id="summaryList"></ul></div>
           <div class="block"><h3>핵심 키워드</h3><div class="chips" id="keywords"></div></div>
@@ -133,6 +138,11 @@
       byId('sourceRankChip').textContent = `Source Rank ${d.source_rank ?? '-'}`;
       byId('readingModeChip').textContent = `Mode ${d.reading_mode ?? 'ranked'}`;
       byId('previewChip').hidden = !d.generated_client_side;
+      byId('previewBlock').hidden = !d.generated_client_side;
+      if(d.generated_client_side){
+        byId('previewNoticeText').textContent = d.preview_notice || '';
+        byId('generateBtn').href = d.generate_action_url || '#';
+      }
       byId('oneLine').textContent = d.one_line || '';
       byId('summaryList').innerHTML = (d.summary || []).map(x => `<li>${escapeHtml(x)}</li>`).join('');
       byId('keywords').innerHTML = (d.keywords || []).map(x => `<span class="chip">${escapeHtml(x)}</span>`).join('');
@@ -197,6 +207,8 @@
 
     function previewKey(id){ return `book-preview-${id}`; }
 
+    const GENERATE_WORKFLOW_URL = 'https://github.com/inesinesinesines/great-books-daily/actions/workflows/generate-book.yml';
+
     function buildClientPreview(bookId, bookMeta){
       const cached = localStorage.getItem(previewKey(bookId));
       if(cached){
@@ -205,6 +217,7 @@
       const b = bookMeta;
       const today = new Date();
       const today_str = fmtDate(today);
+      const notice = `아직 Claude API로 생성된 정식 리포트가 없습니다. GitHub Actions → "Generate Book Report (on-demand)" 워크플로를 book_id=${b.id}로 실행하면 실제 리포트가 생성되어 다음 방문에 자동으로 표시됩니다.`;
       const report = {
         date: today_str,
         book_id: b.id,
@@ -215,22 +228,23 @@
         source_rank: b.source_rank ?? 3,
         source_basis: b.source_basis || '',
         reading_mode: 'preview',
-        one_line: `${b.author}의 『${b.title}』을(를) 간단히 소개하는 임시 요약입니다.`,
+        one_line: `${b.author}의 『${b.title}』 — 아직 정식 리포트 생성 전 임시 안내입니다.`,
         summary: [
-          `이 작품은 ${b.category} 전통에서 주목받는 고전입니다.`,
-          '출처와 논점, 구조를 빠르게 잡을 수 있도록 임시 요약을 제공합니다.',
-          '추후 정식 리포트가 생성되면 깊이 있는 내용으로 대체됩니다.',
-          '주제어와 토론 질문은 books.json 메타를 기반으로 제안되었습니다.',
-          '현재 표시 내용은 네트워크 호출 없이 브라우저에서 합성된 임시 리포트입니다.'
+          `이 작품은 ${b.category} 전통에 속하는 고전입니다 (id=${b.id}).`,
+          '정식 리포트는 Claude API를 통해 서버(GitHub Actions)에서 생성됩니다.',
+          `아래 "정식 리포트 생성하기" 버튼을 눌러 book_id=${b.id}로 워크플로를 실행하면 약 30~60초 후 정식 리포트가 커밋됩니다.`,
+          '생성이 완료되면 GitHub Pages 재배포가 끝난 뒤(보통 1~2분) 페이지를 새로고침하세요.',
+          '이 임시 화면은 브라우저에서 합성된 것이므로 Claude의 요약/해설이 아님을 알려드립니다.'
         ],
-        keywords: [b.category, b.tradition, '고전 개관', '임시 리포트'],
-        why_now: '고전은 오늘의 문제를 다시 바라보게 하는 기준점이 됩니다. 정식 리포트 생성 전에도 맥락 잡기를 시작할 수 있도록 임시 본문을 제공합니다.',
-        discussion_question: `『${b.title}』이 제기하는 문제를 오늘의 현실에 비추면 어떤 논점이 생길까?`,
+        keywords: [b.category, b.tradition, '정식 리포트 미생성', 'book_id=' + b.id],
+        why_now: notice,
+        discussion_question: `『${b.title}』이 제기하는 문제를 오늘의 현실에 비추면 어떤 논점이 생길까? (정식 리포트 생성 후 Claude가 작성한 질문으로 교체됩니다.)`,
         perplexity_followup_prompt: `${b.author}의 ${b.title}을 핵심 개념 3개를 중심으로 현대 사회 문제와 연결해 설명해줘.`,
         next_recommendations: [],
-        source_note: 'Basic Program 기반 Great Books 스타일 임시 프리뷰',
+        source_note: 'client-preview (정식 리포트 미생성)',
         generated_client_side: true,
-        preview_notice: '아직 정식 리포트가 준비되지 않아 임시 요약을 보여드려요'
+        generate_action_url: GENERATE_WORKFLOW_URL,
+        preview_notice: notice
       };
       try{ localStorage.setItem(previewKey(bookId), JSON.stringify(report)); }catch{/* storage full — ignore */}
       return report;

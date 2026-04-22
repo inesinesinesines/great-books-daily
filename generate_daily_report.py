@@ -1,7 +1,8 @@
 import json
 import os
+import re
 import sys
-from datetime import datetime, date, timezone
+from datetime import datetime, date, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 from dotenv import load_dotenv
@@ -246,9 +247,26 @@ def generate_for_date(target_date: date, update_today: bool = True):
     return report
 
 
+def date_for_book_id(book_id: int) -> date:
+    books = load_books()
+    for idx, b in enumerate(books):
+        if b.get("id") == book_id:
+            start = datetime.strptime(START_DATE, "%Y-%m-%d").date()
+            return start + timedelta(days=idx)
+    raise ValueError(f"book_id {book_id} not found in books list (READING_MODE={READING_MODE})")
+
+
+def _parse_arg(arg: str) -> date:
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}", arg):
+        return datetime.strptime(arg, "%Y-%m-%d").date()
+    if re.fullmatch(r"\d+", arg):
+        return date_for_book_id(int(arg))
+    raise ValueError(f"Argument must be YYYY-MM-DD or a book_id integer, got: {arg!r}")
+
+
 def main():
     if len(sys.argv) > 1:
-        target = datetime.strptime(sys.argv[1], "%Y-%m-%d").date()
+        target = _parse_arg(sys.argv[1])
         today = get_today_local()
         generate_for_date(target, update_today=(target == today))
     else:

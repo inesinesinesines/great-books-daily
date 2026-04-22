@@ -75,9 +75,12 @@ def test_e2e_03_click_missing_report_shows_preview(page, http_server):
     page.wait_for_selector("#previewChip:not([hidden])", timeout=5000)
     title = page.text_content("#titleText")
     assert title and title.strip() != "Histories"
-    # Source basis slot should carry the preview notice
-    source_basis = page.text_content("#sourceBasis")
-    assert "프리뷰" in source_basis or "임시" in source_basis
+    # Preview block must be visible and link to the generate workflow
+    page.wait_for_selector("#previewBlock:not([hidden])", timeout=5000)
+    notice = page.text_content("#previewNoticeText")
+    assert "GitHub Actions" in notice
+    href = page.get_attribute("#generateBtn", "href")
+    assert href and "generate-book.yml" in href
 
 
 def test_e2e_04_recommendations_remain_clickable_after_render(page, http_server):

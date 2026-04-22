@@ -21,16 +21,22 @@ class _Namespace:
 
 
 class FakeNotion:
-    """Minimal Notion client stub exercising the create-or-update contract."""
+    """Minimal Notion client stub exercising the create-or-update contract.
 
-    def __init__(self, existing_pages=None):
+    Covers both the legacy `notion.databases.query(...)` call AND the raw
+    `notion.request(path='databases/<id>/query', ...)` call that newer
+    notion-client versions require after they dropped databases.query.
+    """
+
+    def __init__(self, existing_pages=None, expose_databases_query=True):
         # existing_pages: list of dicts like
         #   {"id": "page-xyz", "book_id": 5, "date": "2026-04-22", "children": [...]}
         self.existing_pages = list(existing_pages or [])
         self.calls = []  # ordered log of (method, kwargs)
 
         self.databases = _Namespace()
-        self.databases.query = self._db_query
+        if expose_databases_query:
+            self.databases.query = self._db_query
 
         self.pages = _Namespace()
         self.pages.create = self._pages_create
@@ -42,6 +48,18 @@ class FakeNotion:
         children.list = self._blocks_children_list
         children.append = self._blocks_children_append
         self.blocks.children = children
+
+    def request(self, path, method, query=None, body=None, auth=None):
+        """Raw-request shim used by newer notion-client releases."""
+        self.calls.append(("request", {"path": path, "method": method}))
+        if method == "POST" and path.startswith("databases/") and path.endswith("/query"):
+            body = body or {}
+            return self._db_query(
+                database_id=path.split("/")[1],
+                filter=body.get("filter", {}),
+                page_size=body.get("page_size", 10),
+            )
+        raise NotImplementedError(f"FakeNotion.request unsupported: {method} {path}")
 
     def _db_query(self, database_id, filter, page_size=10, **_):
         self.calls.append(("databases.query", {"database_id": database_id, "filter": filter}))
@@ -171,6 +189,20 @@ def test_upsert_different_book_same_date_creates_new(sample_report):
     result = ptn.upsert_report(notion, "db-id", other)
     assert result["action"] == "create"
     assert len(notion.existing_pages) == 2
+
+
+def test_upsert_falls_back_to_raw_request_when_databases_query_missing(sample_report):
+    # @requirement compat with notion-client 2.5+ (databases.query removed)
+    notion = FakeNotion(existing_pages=[], expose_databases_query=False)
+    assert not hasattr(notion.databases, "query"), "fake must not expose databases.query"
+    result = ptn.upsert_report(notion, "db-id", sample_report)
+    assert result["action"] == "create"
+    methods = [c[0] for c in notion.calls]
+    # Production code must reach for raw request since databases.query is missing
+    request_calls = [c for c in notion.calls if c[0] == "request"]
+    assert len(request_calls) == 1
+    assert request_calls[0][1]["method"] == "POST"
+    assert "/query" in request_calls[0][1]["path"]
 
 
 def test_upsert_different_date_same_book_creates_new(sample_report):

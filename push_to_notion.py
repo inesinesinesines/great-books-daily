@@ -88,20 +88,33 @@ def append_page_body(report: dict):
     return children
 
 
+def _query_database(notion, database_id: str, filter_expr: dict, page_size: int = 1):
+    """Query a Notion database while staying compatible across notion-client
+    versions. Newer releases (2.5+) removed DatabasesEndpoint.query in favor
+    of the data_sources endpoint; the raw HTTP path still works on all
+    versions, so we call it directly as a fallback.
+    """
+    db_query = getattr(getattr(notion, "databases", None), "query", None)
+    if callable(db_query):
+        return db_query(database_id=database_id, filter=filter_expr, page_size=page_size)
+    return notion.request(
+        path=f"databases/{database_id}/query",
+        method="POST",
+        body={"filter": filter_expr, "page_size": page_size},
+    )
+
+
 def find_existing_page(notion, database_id: str, book_id, date_str: str):
     """Return the first Notion page whose (Book ID, Date) match, else None."""
     if book_id is None:
         return None
-    res = notion.databases.query(
-        database_id=database_id,
-        filter={
-            "and": [
-                {"property": "Book ID", "number": {"equals": int(book_id)}},
-                {"property": "Date", "date": {"equals": date_str}},
-            ]
-        },
-        page_size=1,
-    )
+    filter_expr = {
+        "and": [
+            {"property": "Book ID", "number": {"equals": int(book_id)}},
+            {"property": "Date", "date": {"equals": date_str}},
+        ]
+    }
+    res = _query_database(notion, database_id, filter_expr, page_size=1)
     results = res.get("results", [])
     return results[0]["id"] if results else None
 

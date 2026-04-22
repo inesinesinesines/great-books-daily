@@ -120,16 +120,34 @@
     }
 
     function renderRecommendations(recs){
-      byId('recommendations').innerHTML = (recs || []).map(r => `
-        <div class="rec-item" role="button" tabindex="0" data-book-id="${escapeHtml(r.book_id)}" aria-label="${escapeHtml(r.title)} · ${escapeHtml(r.author)}">
-          <strong>${escapeHtml(r.title)}</strong>
-          <div class="small">${escapeHtml(r.author)}</div>
-          <div class="small">${escapeHtml(r.reason || '')}</div>
-        </div>
-      `).join('');
+      byId('recommendations').innerHTML = (recs || []).map(r => {
+        const hasInternalId = Number.isInteger(r.book_id);
+        const idAttr = hasInternalId ? ` data-book-id="${escapeHtml(r.book_id)}"` : '';
+        const titleAttr = ` data-title="${escapeHtml(r.title || '')}" data-author="${escapeHtml(r.author || '')}"`;
+        const badge = hasInternalId
+          ? ''
+          : ' <span class="small muted" style="font-weight:400">↗ Perplexity에서 열기</span>';
+        return `
+          <div class="rec-item" role="button" tabindex="0"${idAttr}${titleAttr} aria-label="${escapeHtml(r.title)} · ${escapeHtml(r.author)}">
+            <strong>${escapeHtml(r.title)}${badge}</strong>
+            <div class="small">${escapeHtml(r.author)}</div>
+            <div class="small">${escapeHtml(r.reason || '')}</div>
+          </div>
+        `;
+      }).join('');
       document.querySelectorAll('#recommendations .rec-item').forEach(el => {
-        const bid = Number(el.getAttribute('data-book-id'));
-        const trigger = () => { if(Number.isFinite(bid)) loadBookReport(bid); };
+        const bidAttr = el.getAttribute('data-book-id');
+        const bid = bidAttr === null ? null : Number(bidAttr);
+        const title = el.getAttribute('data-title') || '';
+        const author = el.getAttribute('data-author') || '';
+        const trigger = () => {
+          if(Number.isInteger(bid)){
+            loadBookReport(bid);
+          } else {
+            const q = encodeURIComponent(`${author}의 ${title}을(를) 설명해줘. 핵심 주장과 현대적 의미를 포함해서.`);
+            window.open(`https://www.perplexity.ai/search/new?q=${q}`, '_blank', 'noopener,noreferrer');
+          }
+        };
         el.addEventListener('click', trigger);
         el.addEventListener('keydown', e => {
           if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); trigger(); }
@@ -145,12 +163,14 @@
       byId('metaText').textContent = `${d.author} · ${d.category} · ${d.tradition}`;
       byId('sourceRankChip').textContent = `Source Rank ${d.source_rank ?? '-'}`;
       byId('readingModeChip').textContent = `Mode ${d.reading_mode ?? 'ranked'}`;
-      byId('previewChip').hidden = !d.generated_client_side || d.generating;
-      byId('generatingChip').hidden = !d.generating;
-      byId('generatingBlock').hidden = !d.generating;
-      byId('previewBlock').hidden = !(d.generated_client_side && !d.generating);
+      const isGenerating = !!d.generating;
+      const isPreview = !!d.generated_client_side;
+      byId('previewChip').hidden = !(isPreview && !isGenerating);
+      byId('generatingChip').hidden = !isGenerating;
+      byId('generatingBlock').hidden = !isGenerating;
+      byId('previewBlock').hidden = !(isPreview && !isGenerating);
       document.querySelectorAll('#summaryArea .summary-block').forEach(el => {
-        el.hidden = !!d.generating;
+        el.hidden = isGenerating;
       });
       if(d.generated_client_side && !d.generating){
         byId('previewNoticeText').textContent = d.preview_notice || '';

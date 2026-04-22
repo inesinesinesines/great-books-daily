@@ -1,8 +1,11 @@
 import json
 import os
+import sys
 from pathlib import Path
 from dotenv import load_dotenv
 from notion_client import Client
+
+from generate_daily_report import _parse_arg
 
 load_dotenv()
 
@@ -20,6 +23,16 @@ def text_obj(value: str):
 def load_today_report():
     path = OUTPUT_DIR / "today.json"
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def load_report_for_date(date_str: str):
+    path = OUTPUT_DIR / "daily" / f"{date_str}.json"
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def load_report_from_arg(arg: str):
+    target_date = _parse_arg(arg)
+    return load_report_for_date(target_date.isoformat())
 
 
 def build_properties(report: dict):
@@ -75,17 +88,76 @@ def append_page_body(report: dict):
     return children
 
 
+def find_existing_page(notion, database_id: str, book_id, date_str: str):
+    """Return the first Notion page whose (Book ID, Date) match, else None."""
+    if book_id is None:
+        return None
+    res = notion.databases.query(
+        database_id=database_id,
+        filter={
+            "and": [
+                {"property": "Book ID", "number": {"equals": int(book_id)}},
+                {"property": "Date", "date": {"equals": date_str}},
+            ]
+        },
+        page_size=1,
+    )
+    results = res.get("results", [])
+    return results[0]["id"] if results else None
+
+
+def clear_page_children(notion, page_id: str):
+    """Delete all direct child blocks of a page so we can replace the body."""
+    cursor = None
+    while True:
+        kwargs = {"block_id": page_id}
+        if cursor:
+            kwargs["start_cursor"] = cursor
+        res = notion.blocks.children.list(**kwargs)
+        for block in res.get("results", []):
+            try:
+                notion.blocks.delete(block_id=block["id"])
+            except Exception as exc:
+                print(f"[WARN] failed to delete block {block['id']}: {exc}", flush=True)
+        if not res.get("has_more"):
+            return
+        cursor = res.get("next_cursor")
+
+
+def upsert_report(notion, database_id: str, report: dict):
+    """Create or update the Notion page for this (book_id, date). Returns {action, id}."""
+    book_id = report.get("book_id")
+    date_str = report["date"]
+    props = build_properties(report)
+    children = append_page_body(report)
+
+    page_id = find_existing_page(notion, database_id, book_id, date_str)
+    if page_id:
+        notion.pages.update(page_id=page_id, properties=props)
+        clear_page_children(notion, page_id)
+        notion.blocks.children.append(block_id=page_id, children=children)
+        return {"action": "update", "id": page_id, "book_id": book_id, "date": date_str}
+
+    created = notion.pages.create(
+        parent={"database_id": database_id},
+        properties=props,
+        children=children,
+    )
+    return {"action": "create", "id": created["id"], "book_id": book_id, "date": date_str}
+
+
 def main():
     if not NOTION_API_KEY or not NOTION_DATABASE_ID:
         raise RuntimeError("NOTION_API_KEY or NOTION_DATABASE_ID is missing")
     notion = Client(auth=NOTION_API_KEY)
-    report = load_today_report()
-    response = notion.pages.create(
-        parent={"database_id": NOTION_DATABASE_ID},
-        properties=build_properties(report),
-        children=append_page_body(report)
-    )
-    print(json.dumps(response, ensure_ascii=False, indent=2))
+
+    if len(sys.argv) > 1:
+        report = load_report_from_arg(sys.argv[1])
+    else:
+        report = load_today_report()
+
+    result = upsert_report(notion, NOTION_DATABASE_ID, report)
+    print(json.dumps(result, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

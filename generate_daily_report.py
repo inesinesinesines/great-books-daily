@@ -52,16 +52,13 @@ def recommendation_reason(book: dict) -> str:
     return "확장 고전 단계에서 시야를 넓혀 주는 보강 텍스트입니다."
 
 
-def build_prompt(book: dict, target_date: str, recommended: list[dict]) -> str:
-    rec_json = json.dumps([
-        {
-            "book_id": b["id"],
-            "author": b["author"],
-            "title": b["title"],
-            "category": b["category"],
-            "source_rank": b.get("source_rank", 3)
-        } for b in recommended
-    ], ensure_ascii=False)
+def build_prompt(book: dict, target_date: str, excluded_titles: list[str]) -> str:
+    """
+    excluded_titles: list of "Author / Title" strings (the app's curated 100).
+    Claude must recommend 3 classics NOT in this list but in a similar author
+    group, tradition, or theme.
+    """
+    excluded_block = "\n".join(f"- {t}" for t in excluded_titles)
     return f"""
 당신은 고전 읽기 앱의 일일 리포트를 만드는 편집자입니다.
 반드시 JSON만 반환하세요. 마크다운, 코드펜스, 설명 문장 없이 순수 JSON만 출력하세요.
@@ -77,8 +74,12 @@ def build_prompt(book: dict, target_date: str, recommended: list[dict]) -> str:
 - source_rank: {book.get('source_rank', 3)}
 - source_basis: {book.get('source_basis', '')}
 
-다음 책 추천 후보:
-{rec_json}
+이 앱에 이미 등록된 100권(아래 목록) 안의 작품은 next_recommendations 후보에서
+**반드시 제외**하세요. 추천은 아래 목록에 없는 고전이어야 합니다.
+
+==== 제외 목록 (Author / Title) ====
+{excluded_block}
+==== 제외 목록 끝 ====
 
 반환 JSON 스키마:
 {{
@@ -98,9 +99,9 @@ def build_prompt(book: dict, target_date: str, recommended: list[dict]) -> str:
   "discussion_question": "한국어 질문 1개",
   "perplexity_followup_prompt": "사용자가 Perplexity에 이어서 물을 수 있는 한국어 질문",
   "next_recommendations": [
-    {{"book_id": 1, "title": "...", "author": "...", "reason": "..."}},
-    {{"book_id": 2, "title": "...", "author": "...", "reason": "..."}},
-    {{"book_id": 3, "title": "...", "author": "...", "reason": "..."}}
+    {{"title": "...", "author": "...", "reason": "...", "external": true}},
+    {{"title": "...", "author": "...", "reason": "...", "external": true}},
+    {{"title": "...", "author": "...", "reason": "...", "external": true}}
   ],
   "source_note": "Basic Program 기반 Great Books 스타일 일일 리포트"
 }}
@@ -110,7 +111,10 @@ def build_prompt(book: dict, target_date: str, recommended: list[dict]) -> str:
 - 짧지만 내용 있게 작성
 - 가짜 인용문 금지
 - 작품의 핵심 사상, 문제의식, 현재적 의미를 중심으로 쓸 것
-- next_recommendations는 출처 우선 흐름을 존중해 추천 순서를 잡을 것
+- next_recommendations는 **위의 100권 목록에 없는 실존 고전** 중에서, 오늘의 책과 같은 저자의 다른 대표작,
+  같은 전통/시대의 연계 작품, 또는 같은 주제의식을 확장하는 고전을 3권 추천하세요.
+- 추천의 reason은 2~3문장으로, 오늘의 책과의 연결점을 명시할 것.
+- book_id는 포함하지 마세요 (외부 고전이므로 id 없음). external=true 플래그만 유지.
 - JSON 외의 어떤 텍스트도 출력하지 말 것
 """.strip()
 
@@ -231,17 +235,33 @@ def save_report(report: dict, update_today: bool = True):
     rebuild_books_index(OUTPUT_DIR)
 
 
-def generate_for_date(target_date: date, update_today: bool = True):
-    books = load_books()
+def generate_for_date(target_date: date, update_today: bool = True, force: bool = False):
+    """Generate (or reuse) the report for target_date.
+
+    If the daily file already exists and force is False, the existing report
+    is reused as-is — no Claude call, no content change. today.json and the
+    books index are still refreshed so downstream consumers (Notion, index)
+    stay consistent.
+    """
     target_str = target_date.isoformat()
+    daily_path = OUTPUT_DIR / 'daily' / f"{target_str}.json"
+    if not force and daily_path.exists():
+        report = json.loads(daily_path.read_text(encoding='utf-8'))
+        print(f"[INFO] {target_str} already exists — reusing (skip Claude)", flush=True)
+        save_report(report, update_today=update_today)
+        print(json.dumps(report, ensure_ascii=False, indent=2))
+        return report
+
+    books = load_books()
     book, idx = pick_book(target_date, books)
-    recommendations = next_books(idx, books, 3)
-    prompt = build_prompt(book, target_str, recommendations)
+    fallback_recs = next_books(idx, books, 3)  # only used if Claude fails
+    excluded_titles = [f"{b['author']} / {b['title']}" for b in books]
+    prompt = build_prompt(book, target_str, excluded_titles)
     try:
         report = call_claude(prompt)
     except Exception as e:
         print(f"[WARN] Claude API failed: {e}", flush=True)
-        report = fallback_report(book, target_str, recommendations)
+        report = fallback_report(book, target_str, fallback_recs)
     save_report(report, update_today=update_today)
     print(json.dumps(report, ensure_ascii=False, indent=2))
     return report
@@ -265,12 +285,15 @@ def _parse_arg(arg: str) -> date:
 
 
 def main():
-    if len(sys.argv) > 1:
-        target = _parse_arg(sys.argv[1])
+    args = [a for a in sys.argv[1:] if a]
+    force = "--force" in args
+    positional = [a for a in args if not a.startswith("--")]
+    if positional:
+        target = _parse_arg(positional[0])
         today = get_today_local()
-        generate_for_date(target, update_today=(target == today))
+        generate_for_date(target, update_today=(target == today), force=force)
     else:
-        generate_for_date(get_today_local())
+        generate_for_date(get_today_local(), force=force)
 
 
 if __name__ == '__main__':

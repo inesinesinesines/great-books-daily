@@ -40,11 +40,23 @@ jobs:
           OUTPUT_DIR: ./data
         run: python generate_daily_report.py "${{ inputs.book_id }}"
 
+      - name: Push report to Notion
+        env:
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+          READING_MODE: ${{ secrets.READING_MODE }}
+          TIMEZONE: ${{ secrets.TIMEZONE }}
+          START_DATE: ${{ secrets.START_DATE }}
+          OUTPUT_DIR: ./data
+          WEB_APP_URL: https://inesinesinesines.github.io/great-books-daily/
+          JSON_BASE_URL: https://inesinesinesines.github.io/great-books-daily/data
+        run: python push_to_notion.py "${{ inputs.book_id }}"
+
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/daily data/books-index.json || true
+          git add data/daily data/books-index.json data/today.json || true
           git diff --cached --quiet && echo "No changes to commit" && exit 0
           git commit -m "Generate on-demand report for book_id=${{ inputs.book_id }}"
           git push

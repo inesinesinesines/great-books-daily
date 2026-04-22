@@ -21,7 +21,13 @@
         <h1>Great Books Daily</h1>
         <p>출처에 가까운 책부터 먼저 읽고, 나중에 확장 고전으로 넓혀가는 흐름의 웹앱입니다.</p>
       </div>
-      <button class="btn" id="themeBtn">테마 전환</button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn" id="prevBtn">&#9664; 이전</button>
+        <span id="navDate" style="font-weight:600;min-width:110px;text-align:center"></span>
+        <button class="btn" id="nextBtn">다음 &#9654;</button>
+        <button class="btn" id="todayBtn" style="margin-left:4px">오늘</button>
+        <button class="btn" id="themeBtn" style="margin-left:8px">테마 전환</button>
+      </div>
     </div>
 
     <div class="hero">
@@ -76,10 +82,20 @@
   </div>
   <script>
     const byId = id => document.getElementById(id);
-    async function loadToday(){
-      const res = await fetch('./data/today.json', {cache:'no-store'});
-      if(!res.ok) throw new Error('today.json load failed');
-      const d = await res.json();
+
+    function fmtDate(d){ return d.toISOString().slice(0,10); }
+    function shiftDate(iso, days){
+      const d = new Date(iso + 'T00:00:00');
+      d.setDate(d.getDate() + days);
+      return fmtDate(d);
+    }
+
+    let currentDate = null;
+    let todayDate = null;
+
+    function render(d){
+      currentDate = d.date;
+      byId('navDate').textContent = d.date;
       byId('dateText').textContent = `${d.date} · 오늘의 책 #${d.book_id}`;
       byId('titleText').textContent = d.title;
       byId('metaText').textContent = `${d.author} · ${d.category} · ${d.tradition}`;
@@ -100,7 +116,37 @@
           <div class="small">${r.reason || ''}</div>
         </div>
       `).join('');
+      byId('nextBtn').disabled = currentDate >= todayDate;
     }
+
+    async function loadDate(dateStr){
+      const res = await fetch(`./data/daily/${dateStr}.json`, {cache:'no-store'});
+      if(!res.ok) throw new Error(`${dateStr} 리포트 없음`);
+      return res.json();
+    }
+
+    async function loadToday(){
+      const res = await fetch('./data/today.json', {cache:'no-store'});
+      if(!res.ok) throw new Error('today.json load failed');
+      const d = await res.json();
+      todayDate = d.date;
+      render(d);
+    }
+
+    async function navigate(days){
+      const target = shiftDate(currentDate, days);
+      if(target > todayDate) return;
+      try{
+        const d = await loadDate(target);
+        render(d);
+      }catch{
+        alert(`${target} 리포트가 없습니다.`);
+      }
+    }
+
+    byId('prevBtn').onclick = () => navigate(-1);
+    byId('nextBtn').onclick = () => navigate(1);
+    byId('todayBtn').onclick = () => loadToday();
     byId('fillBtn').onclick = () => {
       const title = byId('titleText').textContent;
       const meta = byId('metaText').textContent.split(' · ');

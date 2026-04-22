@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 from datetime import datetime, date
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -177,28 +178,38 @@ def fallback_report(book: dict, target_date: str, recommendations: list[dict]) -
     }
 
 
-def save_report(report: dict):
+def save_report(report: dict, update_today: bool = True):
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     daily_dir = OUTPUT_DIR / 'daily'
     daily_dir.mkdir(parents=True, exist_ok=True)
     (daily_dir / f"{report['date']}.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
-    (OUTPUT_DIR / 'today.json').write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
+    if update_today:
+        (OUTPUT_DIR / 'today.json').write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
 
 
-def main():
+def generate_for_date(target_date: date, update_today: bool = True):
     books = load_books()
-    today = get_today_local()
-    today_str = today.isoformat()
-    book, idx = pick_book(today, books)
+    target_str = target_date.isoformat()
+    book, idx = pick_book(target_date, books)
     recommendations = next_books(idx, books, 3)
-    prompt = build_prompt(book, today_str, recommendations)
+    prompt = build_prompt(book, target_str, recommendations)
     try:
         report = call_claude(prompt)
     except Exception as e:
         print(f"[WARN] Claude API failed: {e}", flush=True)
-        report = fallback_report(book, today_str, recommendations)
-    save_report(report)
+        report = fallback_report(book, target_str, recommendations)
+    save_report(report, update_today=update_today)
     print(json.dumps(report, ensure_ascii=False, indent=2))
+    return report
+
+
+def main():
+    if len(sys.argv) > 1:
+        target = datetime.strptime(sys.argv[1], "%Y-%m-%d").date()
+        today = get_today_local()
+        generate_for_date(target, update_today=(target == today))
+    else:
+        generate_for_date(get_today_local())
 
 
 if __name__ == '__main__':

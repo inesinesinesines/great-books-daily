@@ -4,7 +4,7 @@
 
 - UChicago Basic Program / Great Books 스타일 100권 목록
 - 매일 한 권 자동 선택
-- Perplexity API로 하루치 JSON 생성
+- Claude API(Anthropic)로 하루치 JSON 생성
 - 생성된 JSON을 `today.json` 및 날짜별 파일로 저장
 - Notion DB에 하루치 리포트를 row/page로 누적 저장
 - 웹앱에서 `today.json`을 읽어 오늘의 리포트를 표시
@@ -15,10 +15,13 @@
 - `books.json`: 100권 마스터 데이터
 - `config.example.env`: 환경변수 예시
 - `requirements.txt`: Python 의존성
-- `generate_daily_report.py`: Perplexity API로 오늘의 리포트 JSON 생성
+- `generate_daily_report.py`: Claude API로 오늘의 리포트 JSON 생성 (날짜 인자 지원)
 - `push_to_notion.py`: 오늘의 JSON을 Notion DB에 적재
 - `run_daily.py`: 생성 + 적재를 한 번에 실행
-- `webapp.html`: 브라우저용 앱
+- `webapp.html`: 브라우저용 앱 (레거시)
+- `index.html`: GitHub Pages 기본 진입 페이지 (날짜 네비게이션 포함)
+- `.github/workflows/daily-update.yml`: 매일 자동 리포트 생성/배포
+- `.github/workflows/backfill.yml`: 과거 리포트 일괄 재생성
 
 ## 1) 환경 준비
 
@@ -31,9 +34,13 @@ cp config.example.env .env
 
 `.env`에 아래 값을 채우세요.
 
-- `PPLX_API_KEY`
+- `ANTHROPIC_API_KEY` (필수)
+- `CLAUDE_MODEL` (기본값: `claude-sonnet-4-5-20250514`)
 - `NOTION_API_KEY`
 - `NOTION_DATABASE_ID`
+- `READING_MODE` (기본값: `ranked`)
+- `TIMEZONE` (기본값: `Asia/Seoul`)
+- `START_DATE` (기본값: `2026-04-20`)
 - `WEB_APP_URL`
 - `JSON_BASE_URL`
 
@@ -118,7 +125,7 @@ python push_to_notion.py
 이 버전은 Perplexity API 대신 Anthropic Claude API를 사용합니다.
 
 - 환경변수: `ANTHROPIC_API_KEY`, `CLAUDE_MODEL`
-- 기본 모델 예시: `claude-sonnet-4-5-20250929`
+- 기본 모델: `claude-sonnet-4-5-20250514`
 - API 키는 Anthropic Console에서 생성
 
 실행 순서:
@@ -127,8 +134,39 @@ python push_to_notion.py
 3. `python generate_daily_report.py`
 4. `python push_to_notion.py`
 
+### 특정 날짜 리포트 생성
 
-## 10) GitHub Pages 배포 권장값
+날짜 인자를 넘기면 해당 날짜의 리포트를 생성할 수 있습니다. 과거 날짜인 경우 `today.json`은 덮어쓰지 않습니다.
+
+```bash
+python generate_daily_report.py 2026-04-19
+```
+
+### 에러 처리
+
+- Claude API 호출 실패 시 `[WARN]` 로그를 출력하고 fallback 리포트를 생성합니다.
+- Claude 응답에 마크다운 코드펜스(` ```json `)가 포함될 경우 자동으로 제거 후 파싱합니다.
+
+
+## 10) 과거 리포트 일괄 재생성 (Backfill)
+
+GitHub Actions의 **Backfill Past Reports** 워크플로우를 사용하면 과거 리포트를 Claude API로 일괄 재생성할 수 있습니다.
+
+1. GitHub 저장소 → Actions → **Backfill Past Reports** 선택
+2. **Run workflow** 클릭
+3. `start_date`와 `end_date`를 `YYYY-MM-DD` 형식으로 입력
+4. 해당 기간의 리포트가 `data/daily/` 아래에 생성되고 자동 커밋됩니다.
+
+## 11) 날짜 네비게이션
+
+웹앱에서 과거 리포트를 탐색할 수 있습니다.
+
+- **◀ 이전 / 다음 ▶** 버튼으로 `data/daily/{날짜}.json`을 탐색
+- **오늘** 버튼으로 최신 리포트로 복귀
+- 오늘 이후 날짜로는 이동할 수 없습니다.
+- 모바일에서는 제목과 네비게이션이 세로로 배치됩니다.
+
+## 12) GitHub Pages 배포 권장값
 
 GitHub 사용자명이 `inesinesinesines`이고 저장소명을 `great-books-daily`로 만들 경우 권장 URL은 아래와 같습니다.
 

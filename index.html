@@ -39,19 +39,25 @@
           <span class="chip" id="sourceRankChip">source rank</span>
           <span class="chip" id="readingModeChip">reading mode</span>
           <span class="chip preview" id="previewChip" hidden>프리뷰</span>
+          <span class="chip preview" id="generatingChip" hidden>작성 중</span>
         </div>
-        <div class="summary">
+        <div class="summary" id="summaryArea">
+          <div class="block" id="generatingBlock" hidden>
+            <h3>Claude가 리포트를 작성 중입니다</h3>
+            <p>보통 1~2분 정도 걸려요. 완료되는 즉시 이 화면이 자동으로 업데이트됩니다. 창을 닫거나 이동하지 않으셔도 됩니다.</p>
+            <p class="small muted" id="generatingProgress">생성 요청 전송 중...</p>
+          </div>
           <div class="block" id="previewBlock" hidden>
             <h3>정식 리포트 생성 안내</h3>
             <p id="previewNoticeText"></p>
             <a id="generateBtn" class="btn primary" href="#" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin-top:8px;text-decoration:none">정식 리포트 생성하기 (GitHub Actions)</a>
           </div>
-          <div class="block"><h3>한줄 요약</h3><p id="oneLine"></p></div>
-          <div class="block"><h3>5분 요약</h3><ul id="summaryList"></ul></div>
-          <div class="block"><h3>핵심 키워드</h3><div class="chips" id="keywords"></div></div>
-          <div class="block"><h3>왜 지금 읽을 만한가</h3><p id="whyNow"></p></div>
-          <div class="block"><h3>오늘의 질문</h3><p id="discussionQuestion"></p></div>
-          <div class="block"><h3>출처 기준</h3><p id="sourceBasis"></p></div>
+          <div class="block summary-block"><h3>한줄 요약</h3><p id="oneLine"></p></div>
+          <div class="block summary-block"><h3>5분 요약</h3><ul id="summaryList"></ul></div>
+          <div class="block summary-block"><h3>핵심 키워드</h3><div class="chips" id="keywords"></div></div>
+          <div class="block summary-block"><h3>왜 지금 읽을 만한가</h3><p id="whyNow"></p></div>
+          <div class="block summary-block"><h3>오늘의 질문</h3><p id="discussionQuestion"></p></div>
+          <div class="block summary-block"><h3>출처 기준</h3><p id="sourceBasis"></p></div>
         </div>
       </div>
       <div class="card pad qa">
@@ -139,9 +145,14 @@
       byId('metaText').textContent = `${d.author} · ${d.category} · ${d.tradition}`;
       byId('sourceRankChip').textContent = `Source Rank ${d.source_rank ?? '-'}`;
       byId('readingModeChip').textContent = `Mode ${d.reading_mode ?? 'ranked'}`;
-      byId('previewChip').hidden = !d.generated_client_side;
-      byId('previewBlock').hidden = !d.generated_client_side;
-      if(d.generated_client_side){
+      byId('previewChip').hidden = !d.generated_client_side || d.generating;
+      byId('generatingChip').hidden = !d.generating;
+      byId('generatingBlock').hidden = !d.generating;
+      byId('previewBlock').hidden = !(d.generated_client_side && !d.generating);
+      document.querySelectorAll('#summaryArea .summary-block').forEach(el => {
+        el.hidden = !!d.generating;
+      });
+      if(d.generated_client_side && !d.generating){
         byId('previewNoticeText').textContent = d.preview_notice || '';
         const btn = byId('generateBtn');
         btn.href = d.generate_action_url || '#';
@@ -219,9 +230,14 @@
 
     const GENERATE_WORKFLOW_URL = 'https://github.com/inesinesinesines/great-books-daily/actions/workflows/generate-book.yml';
     // Cloudflare Worker endpoint that proxies workflow_dispatch. Empty string
-    // disables auto-dispatch and falls back to the Actions URL link.
-    const WORKER_URL = 'https://gbd-dispatch.books-dailiy.workers.dev';
+    // disables auto-dispatch and falls back to the preview + manual link UX.
+    // `var` (not let/const) so it becomes window.WORKER_URL and E2E tests can
+    // swap it via page.evaluate("WORKER_URL = '...'").
+    var WORKER_URL = 'https://gbd-dispatch.books-dailiy.workers.dev';
     const dispatchedBooks = new Set();
+    const POLL_INTERVAL_MS = 5000;
+    const POLL_TIMEOUT_MS = 180000;  // 3 minutes (workflow ~60s + Pages deploy ~60-120s)
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
 
     function buildClientPreview(bookId, bookMeta){
       const cached = localStorage.getItem(previewKey(bookId));
@@ -315,6 +331,84 @@
       }
     }
 
+    function buildGeneratingState(bookId, bookMeta){
+      const b = bookMeta;
+      return {
+        date: fmtDate(new Date()),
+        book_id: b.id,
+        author: b.author,
+        title: b.title,
+        category: b.category,
+        tradition: b.tradition,
+        source_rank: b.source_rank ?? 3,
+        source_basis: '',
+        reading_mode: '생성 중',
+        one_line: '',
+        summary: [],
+        keywords: [],
+        why_now: '',
+        discussion_question: '',
+        perplexity_followup_prompt: `${b.author}의 ${b.title}을 설명해줘`,
+        next_recommendations: [],
+        source_note: '',
+        generating: true
+      };
+    }
+
+    async function fetchFreshIndex(){
+      try{
+        const res = await fetch(`./data/books-index.json?t=${Date.now()}`, {cache:'no-store'});
+        if(!res.ok) return null;
+        const idx = await res.json();
+        booksIndex = idx;  // update module cache
+        return idx;
+      }catch{ return null; }
+    }
+
+    async function dispatchViaWorker(bookId){
+      if(!WORKER_URL) return { ok:false, reason:'no_worker' };
+      try{
+        const res = await fetch(WORKER_URL, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({book_id: bookId})
+        });
+        if(res.ok || res.status === 202){
+          dispatchedBooks.add(bookId);
+          return { ok:true };
+        }
+        let errBody = '';
+        try{ errBody = (await res.text()).slice(0, 200); }catch{/*ignore*/}
+        return { ok:false, reason:`http_${res.status}`, body:errBody };
+      }catch(err){
+        return { ok:false, reason:'network', error:String(err).slice(0, 200) };
+      }
+    }
+
+    async function pollForReport(bookId, token){
+      const start = Date.now();
+      const key = String(bookId);
+      while(Date.now() - start < POLL_TIMEOUT_MS){
+        if(token !== clickToken) return false;
+        const elapsed = Math.floor((Date.now() - start) / 1000);
+        const pg = byId('generatingProgress');
+        if(pg) pg.textContent = `Claude 작성 중 · ${elapsed}초 경과 (보통 60~120초)`;
+        await sleep(POLL_INTERVAL_MS);
+        if(token !== clickToken) return false;
+        const idx = await fetchFreshIndex();
+        const date = idx?.books?.[key]?.latest;
+        if(date){
+          try{
+            const d = await loadDate(date);
+            if(token !== clickToken) return false;
+            render(d);
+            return true;
+          }catch{/* Pages may not have served the file yet — keep polling */}
+        }
+      }
+      return false;
+    }
+
     async function loadBookReport(bookId){
       const token = ++clickToken;
       const idx = await getBooksIndex();
@@ -328,7 +422,7 @@
           scrollToTop();
           return;
         }catch(err){
-          console.warn('indexed report fetch failed, falling back to preview:', err);
+          console.warn('indexed report fetch failed, switching to generation flow:', err);
         }
       }
       const catalog = await getBooksCatalog();
@@ -338,10 +432,33 @@
         alert('선택한 책의 정보를 찾을 수 없습니다.');
         return;
       }
-      const report = buildClientPreview(bookId, meta);
-      if(token !== clickToken) return;
-      render(report);
+      if(!WORKER_URL){
+        const report = buildClientPreview(bookId, meta);
+        if(token !== clickToken) return;
+        render(report);
+        scrollToTop();
+        return;
+      }
+      render(buildGeneratingState(bookId, meta));
       scrollToTop();
+      if(!dispatchedBooks.has(bookId)){
+        const dispatch = await dispatchViaWorker(bookId);
+        if(token !== clickToken) return;
+        if(!dispatch.ok){
+          console.error('dispatch failed:', dispatch);
+          showToast('생성 요청에 실패해 임시 프리뷰로 돌아갑니다.', 6000);
+          const report = buildClientPreview(bookId, meta);
+          render(report);
+          return;
+        }
+      }
+      const ok = await pollForReport(bookId, token);
+      if(token !== clickToken) return;
+      if(!ok){
+        showToast('시간이 오래 걸리고 있어요. 1분 뒤 페이지를 새로고침해 주세요.', 8000);
+        const report = buildClientPreview(bookId, meta);
+        render(report);
+      }
     }
 
     byId('prevBtn').onclick = () => navigate(-1);

@@ -17,13 +17,17 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def _goto(page, base_url: str):
+def _goto(page, base_url: str, disable_worker: bool = False):
     page.goto(f"{base_url}/index.html", wait_until="networkidle")
     # Wait for today's title to be replaced with real content
     page.wait_for_function(
         "document.getElementById('titleText').textContent !== '오늘의 책을 불러오는 중'",
         timeout=10_000,
     )
+    if disable_worker:
+        # Exercise the preview fallback branch by disabling the Worker URL.
+        # This is not a mock — it's the real code path for a missing Worker.
+        page.evaluate("WORKER_URL = '';")
 
 
 def test_e2e_01_rec_items_are_clickable_ui(page, http_server):
@@ -67,7 +71,8 @@ def test_e2e_02_click_existing_report_renders_it(page, http_server):
 
 def test_e2e_03_click_missing_report_shows_preview(page, http_server):
     # @requirement REQ-004 @requirement EDGE-001
-    _goto(page, http_server)
+    # Disables Worker to exercise preview fallback branch (real code, not a mock).
+    _goto(page, http_server, disable_worker=True)
     # From today's report (book 5), recommendations include book 7, 8, 12 — none indexed.
     target = page.locator("#recommendations .rec-item[data-book-id='7']")
     assert target.count() == 1
@@ -83,9 +88,50 @@ def test_e2e_03_click_missing_report_shows_preview(page, http_server):
     assert href and "generate-book.yml" in href
 
 
+def test_e2e_03b_click_missing_report_with_worker_shows_generating_state(page, http_server):
+    # @requirement REQ-004 (new Worker-driven flow)
+    # Dispatch to loopback:1 fails in <50ms, so the generating DOM state is
+    # too transient for a post-hoc selector check. Instead we instrument the
+    # real render() function to capture DOM state at every invocation —
+    # this is observation, not mocking (render still runs normally).
+    _goto(page, http_server)
+    page.evaluate("WORKER_URL = 'http://127.0.0.1:1';")
+    calls = page.evaluate(
+        """(async () => {
+          window.__calls = [];
+          const orig = window.render;
+          window.render = function(d){
+            const r = orig(d);
+            window.__calls.push({
+              generating: !!d.generating,
+              previewFlag: !!d.generated_client_side,
+              title: d.title,
+              chipVisible: !document.getElementById('generatingChip').hidden,
+              blockVisible: !document.getElementById('generatingBlock').hidden,
+              summaryAllHidden: Array.from(document.querySelectorAll('#summaryArea .summary-block')).every(el => el.hidden)
+            });
+            return r;
+          };
+          loadBookReport(7);
+          await new Promise(r => setTimeout(r, 400));
+          return window.__calls;
+        })()"""
+    )
+    # Expect exactly: first a generating render, then a fallback preview render
+    generating = [c for c in calls if c["generating"]]
+    preview = [c for c in calls if c["previewFlag"] and not c["generating"]]
+    assert len(generating) >= 1, f"no generating render observed. calls={calls}"
+    assert generating[0]["chipVisible"] is True
+    assert generating[0]["blockVisible"] is True
+    assert generating[0]["summaryAllHidden"] is True
+    assert len(preview) >= 1, f"no fallback preview render observed. calls={calls}"
+    # And the final DOM settles on preview visible
+    page.wait_for_selector("#previewBlock:not([hidden])", timeout=5000)
+
+
 def test_e2e_04_recommendations_remain_clickable_after_render(page, http_server):
     # @requirement REQ-006
-    _goto(page, http_server)
+    _goto(page, http_server, disable_worker=True)
     # First click: book 7 (preview)
     page.locator("#recommendations .rec-item[data-book-id='7']").click()
     page.wait_for_selector("#previewChip:not([hidden])", timeout=5000)
@@ -103,7 +149,7 @@ def test_e2e_04_recommendations_remain_clickable_after_render(page, http_server)
 
 def test_e2e_05_keyboard_enter_activates_rec(page, http_server):
     # @requirement NFR-004
-    _goto(page, http_server)
+    _goto(page, http_server, disable_worker=True)
     item = page.locator("#recommendations .rec-item[data-book-id='7']")
     item.focus()
     page.keyboard.press("Enter")
@@ -112,7 +158,7 @@ def test_e2e_05_keyboard_enter_activates_rec(page, http_server):
 
 def test_e2e_06_today_button_restores_today_report(page, http_server):
     # @requirement EDGE-006 @requirement REQ-005
-    _goto(page, http_server)
+    _goto(page, http_server, disable_worker=True)
     original_title = page.text_content("#titleText")
     page.locator("#recommendations .rec-item[data-book-id='7']").click()
     page.wait_for_selector("#previewChip:not([hidden])", timeout=5000)
@@ -136,7 +182,7 @@ def test_e2e_07_no_api_key_exposed(page, http_server):
 
 def test_e2e_08_rapid_clicks_render_only_last(page, http_server):
     # @requirement EDGE-003
-    _goto(page, http_server)
+    _goto(page, http_server, disable_worker=True)
     # Fire both loadBookReport calls within the same microtask so the in-flight
     # guard has to arbitrate — last token wins. We cannot click twice via UI
     # because the first click rerenders recommendations, detaching the second

@@ -1,1 +1,13 @@
 /*.env
+
+# HALO Workflow runtime artifacts (generated during execution)
+.workflow/state.json
+.workflow/loopback-context.md
+.workflow/phase-results/
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Local Claude Code config
+.claude/

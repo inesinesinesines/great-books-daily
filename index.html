@@ -10,7 +10,7 @@
     [data-theme="dark"]{--bg:#171614;--surface:#1c1b19;--surface2:#201f1d;--border:#393836;--text:#e0dfdb;--muted:#b3b1ab;--primary:#4f98a3;--inverse:#171614}
     *{box-sizing:border-box}body{margin:0;font-family:var(--font-body);background:var(--bg);color:var(--text)}
     .wrap{max-width:1180px;margin:0 auto;padding:24px}.top{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:24px}.btn{border:1px solid var(--border);background:var(--surface);color:var(--text);padding:12px 16px;border-radius:999px;cursor:pointer}.btn.primary{background:var(--primary);color:var(--inverse);border-color:var(--primary)}
-    .hero,.grid{display:grid;grid-template-columns:1.1fr .9fr;gap:24px}.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}.pad{padding:24px}.eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}h1,h2{font-family:var(--font-display);line-height:1.08;margin:0 0 12px}h1{font-size:34px}h2{font-size:30px}h3{margin:0 0 8px;font-size:16px}p{color:var(--muted);line-height:1.7}.chips{display:flex;gap:8px;flex-wrap:wrap}.chip{background:rgba(1,105,111,.08);color:var(--primary);padding:6px 10px;border-radius:999px;font-size:13px;font-weight:600}.summary{display:grid;gap:12px;margin-top:16px}.block{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px}ul{margin:0;padding-left:18px}.qa textarea{width:100%;min-height:110px;padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--surface2);color:var(--text)}.muted{color:var(--muted)}.rec{display:grid;gap:10px}.rec-item{padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--surface2)}.rec-item strong{display:block}.small{font-size:13px;color:var(--muted)}@media(max-width:900px){.hero,.grid{grid-template-columns:1fr}.top{flex-direction:column;align-items:flex-start}}
+    .hero,.grid{display:grid;grid-template-columns:1.1fr .9fr;gap:24px}.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}.pad{padding:24px}.eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}h1,h2{font-family:var(--font-display);line-height:1.08;margin:0 0 12px}h1{font-size:34px}h2{font-size:30px}h3{margin:0 0 8px;font-size:16px}p{color:var(--muted);line-height:1.7}.chips{display:flex;gap:8px;flex-wrap:wrap}.chip{background:rgba(1,105,111,.08);color:var(--primary);padding:6px 10px;border-radius:999px;font-size:13px;font-weight:600}.chip.preview{background:rgba(180,120,0,.12);color:#a16207}.summary{display:grid;gap:12px;margin-top:16px}.block{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px}ul{margin:0;padding-left:18px}.qa textarea{width:100%;min-height:110px;padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--surface2);color:var(--text)}.muted{color:var(--muted)}.rec{display:grid;gap:10px}.rec-item{padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--surface2);cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease}.rec-item:hover,.rec-item:focus{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.08);border-color:var(--primary);outline:none}.rec-item:focus-visible{outline:2px solid var(--primary);outline-offset:2px}.rec-item strong{display:block}.small{font-size:13px;color:var(--muted)}@media(max-width:900px){.hero,.grid{grid-template-columns:1fr}.top{flex-direction:column;align-items:flex-start}}
   </style>
 </head>
 <body>
@@ -38,6 +38,7 @@
         <div class="chips" style="margin-bottom:12px">
           <span class="chip" id="sourceRankChip">source rank</span>
           <span class="chip" id="readingModeChip">reading mode</span>
+          <span class="chip preview" id="previewChip" hidden>프리뷰</span>
         </div>
         <div class="summary">
           <div class="block"><h3>한줄 요약</h3><p id="oneLine"></p></div>
@@ -97,6 +98,31 @@
 
     let currentDate = null;
     let todayDate = null;
+    let booksIndex = undefined;
+    let booksCatalog = null;
+    let clickToken = 0;
+
+    function escapeHtml(s){
+      return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function renderRecommendations(recs){
+      byId('recommendations').innerHTML = (recs || []).map(r => `
+        <div class="rec-item" role="button" tabindex="0" data-book-id="${escapeHtml(r.book_id)}" aria-label="${escapeHtml(r.title)} · ${escapeHtml(r.author)}">
+          <strong>${escapeHtml(r.title)}</strong>
+          <div class="small">${escapeHtml(r.author)}</div>
+          <div class="small">${escapeHtml(r.reason || '')}</div>
+        </div>
+      `).join('');
+      document.querySelectorAll('#recommendations .rec-item').forEach(el => {
+        const bid = Number(el.getAttribute('data-book-id'));
+        const trigger = () => { if(Number.isFinite(bid)) loadBookReport(bid); };
+        el.addEventListener('click', trigger);
+        el.addEventListener('keydown', e => {
+          if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); trigger(); }
+        });
+      });
+    }
 
     function render(d){
       currentDate = d.date;
@@ -106,22 +132,16 @@
       byId('metaText').textContent = `${d.author} · ${d.category} · ${d.tradition}`;
       byId('sourceRankChip').textContent = `Source Rank ${d.source_rank ?? '-'}`;
       byId('readingModeChip').textContent = `Mode ${d.reading_mode ?? 'ranked'}`;
+      byId('previewChip').hidden = !d.generated_client_side;
       byId('oneLine').textContent = d.one_line || '';
-      byId('summaryList').innerHTML = (d.summary || []).map(x => `<li>${x}</li>`).join('');
-      byId('keywords').innerHTML = (d.keywords || []).map(x => `<span class="chip">${x}</span>`).join('');
+      byId('summaryList').innerHTML = (d.summary || []).map(x => `<li>${escapeHtml(x)}</li>`).join('');
+      byId('keywords').innerHTML = (d.keywords || []).map(x => `<span class="chip">${escapeHtml(x)}</span>`).join('');
       byId('whyNow').textContent = d.why_now || '';
       byId('discussionQuestion').textContent = d.discussion_question || '';
-      byId('sourceBasis').textContent = d.source_basis || '';
+      byId('sourceBasis').textContent = d.generated_client_side && d.preview_notice ? d.preview_notice : (d.source_basis || '');
       byId('questionBox').value = d.perplexity_followup_prompt || `${d.author}의 ${d.title}을 설명해줘`;
-      const recs = d.next_recommendations || [];
-      byId('recommendations').innerHTML = recs.map(r => `
-        <div class="rec-item">
-          <strong>${r.title}</strong>
-          <div class="small">${r.author}</div>
-          <div class="small">${r.reason || ''}</div>
-        </div>
-      `).join('');
-      byId('nextBtn').disabled = currentDate >= todayDate;
+      renderRecommendations(d.next_recommendations || []);
+      byId('nextBtn').disabled = !todayDate || currentDate >= todayDate;
     }
 
     async function loadDate(dateStr){
@@ -147,6 +167,106 @@
       }catch{
         alert(`${target} 리포트가 없습니다.`);
       }
+    }
+
+    async function getBooksIndex(){
+      if(booksIndex !== undefined) return booksIndex;
+      try{
+        const res = await fetch('./data/books-index.json', {cache:'no-store'});
+        if(!res.ok) throw new Error(`books-index ${res.status}`);
+        booksIndex = await res.json();
+      }catch(err){
+        console.warn('books-index unavailable, fallback to preview-only mode:', err.message);
+        booksIndex = null;
+      }
+      return booksIndex;
+    }
+
+    async function getBooksCatalog(){
+      if(booksCatalog !== null) return booksCatalog;
+      try{
+        const res = await fetch('./books.json', {cache:'no-store'});
+        if(!res.ok) throw new Error(`books.json ${res.status}`);
+        booksCatalog = await res.json();
+      }catch(err){
+        console.error('books.json load failed:', err);
+        booksCatalog = [];
+      }
+      return booksCatalog;
+    }
+
+    function previewKey(id){ return `book-preview-${id}`; }
+
+    function buildClientPreview(bookId, bookMeta){
+      const cached = localStorage.getItem(previewKey(bookId));
+      if(cached){
+        try{ return JSON.parse(cached); }catch{/* fall through */}
+      }
+      const b = bookMeta;
+      const today = new Date();
+      const today_str = fmtDate(today);
+      const report = {
+        date: today_str,
+        book_id: b.id,
+        author: b.author,
+        title: b.title,
+        category: b.category,
+        tradition: b.tradition,
+        source_rank: b.source_rank ?? 3,
+        source_basis: b.source_basis || '',
+        reading_mode: 'preview',
+        one_line: `${b.author}의 『${b.title}』을(를) 간단히 소개하는 임시 요약입니다.`,
+        summary: [
+          `이 작품은 ${b.category} 전통에서 주목받는 고전입니다.`,
+          '출처와 논점, 구조를 빠르게 잡을 수 있도록 임시 요약을 제공합니다.',
+          '추후 정식 리포트가 생성되면 깊이 있는 내용으로 대체됩니다.',
+          '주제어와 토론 질문은 books.json 메타를 기반으로 제안되었습니다.',
+          '현재 표시 내용은 네트워크 호출 없이 브라우저에서 합성된 임시 리포트입니다.'
+        ],
+        keywords: [b.category, b.tradition, '고전 개관', '임시 리포트'],
+        why_now: '고전은 오늘의 문제를 다시 바라보게 하는 기준점이 됩니다. 정식 리포트 생성 전에도 맥락 잡기를 시작할 수 있도록 임시 본문을 제공합니다.',
+        discussion_question: `『${b.title}』이 제기하는 문제를 오늘의 현실에 비추면 어떤 논점이 생길까?`,
+        perplexity_followup_prompt: `${b.author}의 ${b.title}을 핵심 개념 3개를 중심으로 현대 사회 문제와 연결해 설명해줘.`,
+        next_recommendations: [],
+        source_note: 'Basic Program 기반 Great Books 스타일 임시 프리뷰',
+        generated_client_side: true,
+        preview_notice: '아직 정식 리포트가 준비되지 않아 임시 요약을 보여드려요'
+      };
+      try{ localStorage.setItem(previewKey(bookId), JSON.stringify(report)); }catch{/* storage full — ignore */}
+      return report;
+    }
+
+    function scrollToTop(){
+      window.scrollTo({top:0, behavior:'smooth'});
+    }
+
+    async function loadBookReport(bookId){
+      const token = ++clickToken;
+      const idx = await getBooksIndex();
+      const key = String(bookId);
+      const dateHit = idx && idx.books && idx.books[key] && idx.books[key].latest;
+      if(dateHit){
+        try{
+          const d = await loadDate(dateHit);
+          if(token !== clickToken) return;
+          render(d);
+          scrollToTop();
+          return;
+        }catch(err){
+          console.warn('indexed report fetch failed, falling back to preview:', err);
+        }
+      }
+      const catalog = await getBooksCatalog();
+      if(token !== clickToken) return;
+      const meta = (catalog || []).find(b => b.id === bookId);
+      if(!meta){
+        alert('선택한 책의 정보를 찾을 수 없습니다.');
+        return;
+      }
+      const report = buildClientPreview(bookId, meta);
+      if(token !== clickToken) return;
+      render(report);
+      scrollToTop();
     }
 
     byId('prevBtn').onclick = () => navigate(-1);

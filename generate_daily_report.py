@@ -1,7 +1,7 @@
 import json
 import os
 import sys
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 from dotenv import load_dotenv
@@ -178,6 +178,48 @@ def fallback_report(book: dict, target_date: str, recommendations: list[dict]) -
     }
 
 
+def rebuild_books_index(output_dir: Path) -> dict:
+    """Scan output_dir/daily/*.json and rebuild output_dir/books-index.json.
+
+    Returns the index dict. Reports without a 'book_id' field are skipped.
+    Dates within each book entry are sorted ascending; 'latest' is the max.
+    """
+    output_dir = Path(output_dir)
+    daily_dir = output_dir / 'daily'
+    books: dict[str, dict] = {}
+    if daily_dir.exists():
+        for path in sorted(daily_dir.glob('*.json')):
+            try:
+                data = json.loads(path.read_text(encoding='utf-8'))
+            except (OSError, json.JSONDecodeError) as exc:
+                print(f"[WARN] books-index: skip {path.name}: {exc}", flush=True)
+                continue
+            bid = data.get('book_id')
+            if bid is None:
+                print(f"[WARN] books-index: {path.name} has no book_id", flush=True)
+                continue
+            date_str = data.get('date') or path.stem
+            key = str(bid)
+            entry = books.setdefault(key, {'latest': '', 'dates': []})
+            if date_str not in entry['dates']:
+                entry['dates'].append(date_str)
+    for entry in books.values():
+        entry['dates'].sort()
+        entry['latest'] = entry['dates'][-1] if entry['dates'] else ''
+    sorted_books = {k: books[k] for k in sorted(books.keys(), key=lambda s: int(s))}
+    index = {
+        'generated_at': datetime.now(timezone.utc).astimezone().isoformat(timespec='seconds'),
+        'count': len(sorted_books),
+        'books': sorted_books,
+    }
+    output_dir.mkdir(parents=True, exist_ok=True)
+    (output_dir / 'books-index.json').write_text(
+        json.dumps(index, ensure_ascii=False, indent=2),
+        encoding='utf-8',
+    )
+    return index
+
+
 def save_report(report: dict, update_today: bool = True):
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     daily_dir = OUTPUT_DIR / 'daily'
@@ -185,6 +227,7 @@ def save_report(report: dict, update_today: bool = True):
     (daily_dir / f"{report['date']}.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
     if update_today:
         (OUTPUT_DIR / 'today.json').write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
+    rebuild_books_index(OUTPUT_DIR)
 
 
 def generate_for_date(target_date: date, update_today: bool = True):

@@ -122,6 +122,16 @@ def extract_text(resp) -> str:
     return ''.join(parts).strip()
 
 
+def strip_code_fences(text: str) -> str:
+    text = text.strip()
+    if text.startswith("```"):
+        first_nl = text.index("\n")
+        text = text[first_nl + 1:]
+    if text.endswith("```"):
+        text = text[:-3]
+    return text.strip()
+
+
 def call_claude(prompt: str) -> dict:
     if not ANTHROPIC_API_KEY:
         raise RuntimeError('ANTHROPIC_API_KEY is missing')
@@ -133,6 +143,7 @@ def call_claude(prompt: str) -> dict:
         messages=[{"role": "user", "content": prompt}],
     )
     content = extract_text(msg)
+    content = strip_code_fences(content)
     return json.loads(content)
 
 

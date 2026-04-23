@@ -898,5 +898,14 @@
     "tradition": "20th Century",
     "source_rank": 3,
     "source_basis": "UChicago 스타일 Great Books 확장 보강(근거 약함/간접적)"
+  },
+  {
+    "id": 101,
+    "author": "Sophocles",
+    "title": "Ajax",
+    "category": "Classic",
+    "tradition": "Unknown",
+    "source_rank": 4,
+    "source_basis": "User-requested external recommendation"
   }
 ]

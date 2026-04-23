@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-04-23T02:23:15+00:00",
-  "count": 7,
+  "generated_at": "2026-04-23T02:27:57+00:00",
+  "count": 8,
   "books": {
     "1": {
       "latest": "2026-04-20",
@@ -43,6 +43,15 @@
       "dates": [
         "2026-04-19"
       ]
+    },
+    "101": {
+      "latest": "2026-07-29",
+      "dates": [
+        "2026-07-29"
+      ],
+      "external": true,
+      "title_norm": "ajax",
+      "author_norm": "sophocles"
     }
   }
 }

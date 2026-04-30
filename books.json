@@ -907,5 +907,14 @@
     "tradition": "Unknown",
     "source_rank": 4,
     "source_basis": "User-requested external recommendation"
+  },
+  {
+    "id": 102,
+    "author": "Aristotle",
+    "title": "Rhetoric",
+    "category": "Classic",
+    "tradition": "Unknown",
+    "source_rank": 4,
+    "source_basis": "User-requested external recommendation"
   }
 ]

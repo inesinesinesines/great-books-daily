@@ -916,5 +916,14 @@
     "tradition": "Unknown",
     "source_rank": 4,
     "source_basis": "User-requested external recommendation"
+  },
+  {
+    "id": 103,
+    "author": "Plato",
+    "title": "Laws",
+    "category": "Classic",
+    "tradition": "Unknown",
+    "source_rank": 4,
+    "source_basis": "User-requested external recommendation"
   }
 ]

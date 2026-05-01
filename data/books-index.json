@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-05-01T06:22:07+00:00",
-  "count": 15,
+  "generated_at": "2026-05-01T07:08:34+00:00",
+  "count": 16,
   "books": {
     "1": {
       "latest": "2026-04-20",
@@ -97,6 +97,15 @@
       "external": true,
       "title_norm": "rhetoric",
       "author_norm": "aristotle"
+    },
+    "103": {
+      "latest": "2026-07-31",
+      "dates": [
+        "2026-07-31"
+      ],
+      "external": true,
+      "title_norm": "laws",
+      "author_norm": "plato"
     }
   }
 }

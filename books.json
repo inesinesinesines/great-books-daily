@@ -934,5 +934,14 @@
     "tradition": "Unknown",
     "source_rank": 4,
     "source_basis": "User-requested external recommendation"
+  },
+  {
+    "id": 105,
+    "author": "Epicurus",
+    "title": "Letter to Menoeceus",
+    "category": "Classic",
+    "tradition": "Unknown",
+    "source_rank": 4,
+    "source_basis": "User-requested external recommendation"
   }
 ]

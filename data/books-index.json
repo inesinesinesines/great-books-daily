@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-05-05T05:50:07+00:00",
-  "count": 20,
+  "generated_at": "2026-05-05T07:25:27+00:00",
+  "count": 21,
   "books": {
     "1": {
       "latest": "2026-04-20",
@@ -130,6 +130,15 @@
       "external": true,
       "title_norm": "laws",
       "author_norm": "plato"
+    },
+    "104": {
+      "latest": "2026-08-01",
+      "dates": [
+        "2026-08-01"
+      ],
+      "external": true,
+      "title_norm": "the life of saint anthony",
+      "author_norm": "athanasius"
     }
   }
 }

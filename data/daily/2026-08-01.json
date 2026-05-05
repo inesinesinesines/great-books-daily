@@ -1,0 +1,49 @@
+{
+  "date": "2026-08-01",
+  "book_id": 104,
+  "author": "Athanasius",
+  "title": "The Life of Saint Anthony",
+  "category": "Classic",
+  "tradition": "Unknown",
+  "source_rank": 4,
+  "source_basis": "User-requested external recommendation",
+  "reading_mode": "ranked",
+  "one_line": "사막의 은둔자 안토니우스의 삶을 통해 초기 기독교 수도원 운동의 이상과 영적 투쟁을 그린 최초의 성인전.",
+  "summary": [
+    "4세기 알렉산드리아의 주교 아타나시우스가 이집트 사막의 은둔자 안토니우스의 생애를 기록한 작품이다.",
+    "안토니우스는 재산을 버리고 사막으로 들어가 악마와의 영적 전투를 치르며 금욕적 삶을 실천한다.",
+    "이 작품은 기독교 수도원 운동의 모범을 제시하며, 서구 전역에 은둔 수도 생활의 이상을 전파했다.",
+    "육체적 욕망과 악마적 유혹을 극복하는 과정이 생생하게 묘사되며, 영적 완성을 향한 여정이 핵심을 이룬다.",
+    "초기 기독교 영성의 원형을 보여주며, 중세 수도원 문화와 성인 숭배 전통의 토대가 되었다."
+  ],
+  "keywords": [
+    "수도원주의",
+    "영적 투쟁",
+    "금욕주의",
+    "초기 기독교"
+  ],
+  "why_now": "현대 사회의 물질주의와 끊임없는 자극 속에서, 안토니우스의 사막 은둔은 고독과 침묵을 통한 자기 성찰의 가치를 일깨운다. 외적 소유를 버리고 내적 자유를 추구하는 그의 여정은 오늘날 미니멀리즘과 영적 웰빙에 대한 관심과 맞닿아 있다.",
+  "discussion_question": "안토니우스가 선택한 극단적 고립과 금욕의 삶은 현대인에게 어떤 의미로 재해석될 수 있을까? 세속을 떠나지 않고도 영적 깊이를 추구할 수 있는가?",
+  "perplexity_followup_prompt": "초기 기독교 사막 교부들의 영성 전통과 현대 수도원 운동의 연결점은 무엇인가요?",
+  "next_recommendations": [
+    {
+      "title": "The Sayings of the Desert Fathers",
+      "author": "Anonymous",
+      "reason": "안토니우스와 동시대 사막 교부들의 금언과 일화를 모은 작품으로, 초기 수도원 영성의 실천적 지혜를 담고 있다. 안토니우스의 삶이 개인 전기라면, 이 작품은 사막 수도 운동 전체의 집단적 목소리를 전한다.",
+      "external": true
+    },
+    {
+      "title": "The Rule of Saint Benedict",
+      "author": "Benedict of Nursia",
+      "reason": "안토니우스의 은둔 수도 전통을 공동체적 수도원 생활로 체계화한 6세기의 규칙서이다. 사막의 개인적 영성이 어떻게 서구 수도원 제도의 기초가 되었는지 보여주며, 중세 기독교 문화 형성에 결정적 영향을 미쳤다.",
+      "external": true
+    },
+    {
+      "title": "The Ladder of Divine Ascent",
+      "author": "John Climacus",
+      "reason": "7세기 시나이 수도원장이 쓴 영적 성장의 단계적 안내서로, 안토니우스가 체현한 수도 생활의 이상을 30단계의 사다리로 체계화했다. 동방 정교회 영성의 핵심 텍스트로, 악덕 극복과 덕의 함양이라는 주제를 심화한다.",
+      "external": true
+    }
+  ],
+  "source_note": "Basic Program 기반 Great Books 스타일 일일 리포트"
+}

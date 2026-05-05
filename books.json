@@ -925,5 +925,14 @@
     "tradition": "Unknown",
     "source_rank": 4,
     "source_basis": "User-requested external recommendation"
+  },
+  {
+    "id": 104,
+    "author": "Athanasius",
+    "title": "The Life of Saint Anthony",
+    "category": "Classic",
+    "tradition": "Unknown",
+    "source_rank": 4,
+    "source_basis": "User-requested external recommendation"
   }
 ]

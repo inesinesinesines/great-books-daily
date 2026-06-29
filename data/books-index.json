@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-06-28T07:09:09+00:00",
-  "count": 77,
+  "generated_at": "2026-06-29T07:39:42+00:00",
+  "count": 78,
   "books": {
     "1": {
       "latest": "2026-04-20",
@@ -481,6 +481,15 @@
       "external": true,
       "title_norm": "ulysses",
       "author_norm": "james joyce"
+    },
+    "107": {
+      "latest": "2026-08-04",
+      "dates": [
+        "2026-08-04"
+      ],
+      "external": true,
+      "title_norm": "considerations on representative government",
+      "author_norm": "john stuart mill"
     }
   }
 }

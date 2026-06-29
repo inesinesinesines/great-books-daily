@@ -952,5 +952,14 @@
     "tradition": "Unknown",
     "source_rank": 4,
     "source_basis": "User-requested external recommendation"
+  },
+  {
+    "id": 107,
+    "author": "John Stuart Mill",
+    "title": "Considerations on Representative Government",
+    "category": "Classic",
+    "tradition": "Unknown",
+    "source_rank": 4,
+    "source_basis": "User-requested external recommendation"
   }
 ]
